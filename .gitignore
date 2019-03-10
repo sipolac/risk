@@ -4,3 +4,4 @@
 *.csv
 
 .vscode
+.ipynb_checkpoints
