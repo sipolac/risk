@@ -8,7 +8,6 @@ Functions for computing battle outcome probabilities in the board game Risk.
 """
 from collections import defaultdict
 from operator import itemgetter
-from typing import Dict, Tuple
 import argparse
 
 
@@ -48,9 +47,7 @@ loss_probs = {
 }
 
 
-def calc_battle_probs(a: int,
-                      d: int,
-                      stop: int = STOP_DEFAULT) -> Dict[Tuple[int], float]:
+def calc_battle_probs(a, d, stop=STOP_DEFAULT):
     """Get probability of all outcomes.
 
     Args:
@@ -65,14 +62,13 @@ def calc_battle_probs(a: int,
     return calc_battle_probs_recur(a, d, stop, 1, dict())
 
 
-def calc_battle_probs_recur(a, d, stop, p: float, memo):
+def calc_battle_probs_recur(a, d, stop, p, memo):
     """Recursive helper.
 
     Additional args:
         p: Probability of seeing current number of attack and defense troops
         memo: Memo of probabilities where key is tuple of `a` and `d`
     """
-
     if a <= stop or d == 0:
         return {(a, d): 1}  # outcome has prob = 1 in absorbing state
     if (a, d) in memo:
@@ -110,7 +106,7 @@ def calc_win_prob(battle_probs):
     return sum([p for (a, d), p in battle_probs.items() if d == 0])
 
 
-def calc_cum_probs(battle_probs, attack: bool):
+def calc_cum_probs(battle_probs, attack):
     """Calculate cumulative probs for attack or defense."""
     index = 0 if attack else 1
     battle_prob_list = sorted(battle_probs.items(),
