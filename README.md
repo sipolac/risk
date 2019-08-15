@@ -2,7 +2,7 @@
 
 This project has some functions for computing the probabilities of outcomes in the board game [Risk](https://en.wikipedia.org/wiki/Risk_(game)).
 
-It uses a recursive approach that's faster and (in my opinion) more elegant than a direct implementation of a [pure statistics approach](http://www4.stat.ncsu.edu/~jaosborn/research/RISK.pdf).
+It uses a recursive approach that's a bit nicer than a direct implementation of a [pure statistics approach](http://www4.stat.ncsu.edu/~jaosborn/research/RISK.pdf).
 
 
 # Arguments
@@ -24,8 +24,9 @@ optional arguments:
 
 # Examples
 
-To see the probabilities of the outcomes of a battle where the number of troops on the attacking territory is 10 and on the defending territory is 7, then do:
-    `python risk.py 10 5`
+For a battle where the attacking territory has 10 and the defending territory has 7:
+
+    python risk.py 10 5
 
 This will print:
 ```
@@ -68,12 +69,12 @@ attack: cumulative probability (at least)
 win prob: 0.8729364726512274
 ```
 
-Some conclusions you could make from this:
+Some readings of the above output:
 * The probability of attack overtaking defense is 87.3% (see last printed statement).
 * The probability of attack having more than, say, 8 troops at the end of the engagement is 36.2%.
 * The probability that the outcome of attack having exactly 8 troops at the end of the engagement is 14.7%.
 
-The code can be used in Python as well:
+To run it in Python:
 ```python
 >>> import risk
 >>> risk.calc_battle_probs(10, 7)
