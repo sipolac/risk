@@ -45,16 +45,11 @@ def calc_battle_probs(a, d, stop=STOP_DEFAULT):
         Dict where key is tuple of final attack and defense troops, and
         values are probabilites of those outcomes
     """
-    return calc_battle_probs_recur(a, d, stop, 1, dict())
+    return calc_battle_probs_recur(a, d, stop, dict())
 
 
-def calc_battle_probs_recur(a, d, stop, p, memo):
-    """Recursive helper.
-
-    Additional args:
-        p: Probability of seeing current number of attack and defense troops
-        memo: Memo of probabilities where key is tuple of `a` and `d`
-    """
+def calc_battle_probs_recur(a, d, stop, memo):
+    """Recursive helper."""
     if a <= stop or d == 0:
         return {(a, d): 1}  # outcome has prob = 1 in absorbing state
     if (a, d) in memo:
@@ -68,7 +63,7 @@ def calc_battle_probs_recur(a, d, stop, p, memo):
         if (a2, d2) in memo:
             new = memo[(a2, d2)]
         else:
-            new = calc_battle_probs_recur(a2, d2, stop, p, memo)
+            new = calc_battle_probs_recur(a2, d2, stop, memo)
         # Multiply by upstream probability.
         new = {(a, d): p * p2 for (a, d), p in new.items()}
         probs_list.append(new)
