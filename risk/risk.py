@@ -8,7 +8,7 @@ Functions for computing battle outcome probabilities in the board game Risk.
 """
 from collections import defaultdict
 from operator import itemgetter
-from typing import Dict, List, Tuple
+from typing import Dict, Tuple
 import argparse
 
 
@@ -96,6 +96,7 @@ def calc_battle_probs_recur(a, d, stop, p: float, memo):
     memo[(a, d)] = combined
     return memo[(a, d)]
 
+
 def combine_dict_probs(dict_list):
     """Combine list dicts into single dict, summing probabilies."""
     combined = defaultdict(int)
@@ -125,17 +126,16 @@ def calc_cum_probs(battle_probs, attack: bool):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('a', type=int, help='num. troops on attacking territory')
-    parser.add_argument('d', type=int, help='num. troops on defending territory')
+    parser.add_argument('a',
+                        type=int,
+                        help='number of troops on attacking territory')
+    parser.add_argument('d',
+                        type=int,
+                        help='number of troops on defending territory')
     parser.add_argument('--stop',
                         default=STOP_DEFAULT,
                         type=int,
                         help='when attack has this many troops or fewer, stop')
-    # parser.add_argument('-c',
-    #                     '--cumulative',
-    #                     action='store_true',
-    #                     default=False,
-    #                     help='make battle probabilities cumulative')
     args = parser.parse_args()
     assert args.stop > 0
 
@@ -150,7 +150,8 @@ def main():
 
     # Print cumulative probabilities.
     for attack in [False, True]:
-        print(f'\n{"attack" if attack else "defense"}: cumulative probability (at least)')
+        player_text = "attack" if attack else "defense"
+        print(f'\n{player_text}: cumulative probability (at least)')
         cum_probs = calc_cum_probs(battle_probs, attack)
         for num, p in cum_probs:
             print(f'{num}: {p}')
