@@ -74,7 +74,7 @@ Some readings of the above output:
 * The probability of attack having more than, say, 8 troops at the end of the engagement is 36.2%.
 * The probability that the outcome of attack having exactly 8 troops at the end of the engagement is 14.7%.
 
-To run it in Python:
+To use it in Python:
 ```python
 >>> import risk
 >>> risk.calc_battle_probs(10, 7)
