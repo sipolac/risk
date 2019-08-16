@@ -74,7 +74,7 @@ Some readings of the above output:
 If defense has a +2 bonus and is therefore rolling with 8-sided dice:
 
 ```
->>> python3 risk.py 10 5 --dsides 8
+>>> python3 risk.py 5 4 --dsides 8
 (attack, defense): probability
 (1, 1): 0.08373009443903778
 (1, 2): 0.19414771967101685
