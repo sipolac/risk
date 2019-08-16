@@ -6,15 +6,13 @@ Created: 2019-08-15
 
 Functions for computing battle outcome probabilities in the board game Risk.
 """
-from collections import defaultdict
+from collections import defaultdict, OrderedDict
 from functools import lru_cache
 from itertools import product
 from operator import itemgetter
 import argparse
 
 
-A_SIDES_DEFAULT = 6
-D_SIDES_DEFAULT = 6
 STOP_DEFAULT = 1
 
 
@@ -69,19 +67,11 @@ def get_loss_probs(a_sides, d_sides):
             a_losses = sum([1 for a, d in zip(a_vals, d_vals) if a <= d])
             loss_probs_rolls[(a_losses, total_losses - a_losses)] += 1 / n
 
-        # # Go from counts to probs. Do this after everything's already been
-        # # counted just to minimize floating point errors.
-        # loss_probs_rolls = {k: x / n for k, x in loss_probs_rolls.items()}
-
         loss_probs[(a_rolls, d_rolls)] = loss_probs_rolls
     return loss_probs
 
 
-def calc_battle_probs(a,
-                      d,
-                      a_sides=A_SIDES_DEFAULT,
-                      d_sides=D_SIDES_DEFAULT,
-                      stop=STOP_DEFAULT):
+def calc_battle_probs(a, d, a_sides=6, d_sides=6, stop=STOP_DEFAULT):
     """Get probability of all outcomes.
 
     Args:
@@ -149,7 +139,7 @@ def calc_cum_probs(battle_probs, attack):
     for tup, p in battle_prob_list:
         cum_prob += p
         probs[tup[index]] = cum_prob
-    return sorted(probs.items())
+    return OrderedDict(sorted(probs.items()))
 
 
 def main():
@@ -161,11 +151,11 @@ def main():
                         type=int,
                         help='number of troops on defending territory')
     parser.add_argument('--asides',
-                        default=A_SIDES_DEFAULT,
+                        default=6,
                         type=int,
                         help='number of sides on attack dice')
     parser.add_argument('--dsides',
-                        default=D_SIDES_DEFAULT,
+                        default=6,
                         type=int,
                         help='number of sides on defense dice')
     parser.add_argument('--stop',
@@ -192,7 +182,7 @@ def main():
         player_text = "attack" if attack else "defense"
         print(f'\n{player_text}: cumulative probability (at least)')
         cum_probs = calc_cum_probs(battle_probs, attack)
-        for num, p in cum_probs:
+        for num, p in cum_probs.items():
             print(f'{num}: {p}')
 
     print(f'\nwin prob: {win_prob}')

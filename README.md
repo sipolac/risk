@@ -35,12 +35,10 @@ optional arguments:
 
 ## Command line
 
-For a battle where the attacking territory has 10 and the defending territory has 5:
+For a battle where the attacking territory has 5 and the defending territory has 4:
 
-    python risk.py 5 4
-
-This will print:
 ```
+>>> python risk.py 5 4
 (attack, defense): probability
 (1, 1): 0.08263191440573789
 (1, 2): 0.16578464212787658
@@ -75,11 +73,8 @@ Some readings of the above output:
 
 If defense has a +2 bonus and is therefore rolling with 8-sided dice:
 
-    python3 risk.py 10 5 --dsides 8
-
-Which gives you:
-
 ```
+>>> python3 risk.py 10 5 --dsides 8
 (attack, defense): probability
 (1, 1): 0.08373009443903778
 (1, 2): 0.19414771967101685
@@ -111,7 +106,6 @@ You see that attack's win probability drops to 21.9%
 
 ## Python
 
-To use it in Python:
 ```python
 >>> import risk
 >>> battle_probs = risk.calc_battle_probs(5, 4, d_sides=8)
@@ -119,8 +113,8 @@ To use it in Python:
 {(1, 4): 0.26489844930516626, (1, 3): 0.2379265900038769, (1, 2): 0.19414771967101685, (1, 1): 0.08373009443903778, (2, 0): 0.038059133835926254, (3, 0): 0.06613429494193751, (4, 0): 0.07139900856820838, (5, 0): 0.043704709234880686}
 >>> risk.calc_win_prob(battle_probs)
 0.21929714658095284
->>> risk.calc_cum_probs(battle_probs, attack=True)  # for attack's values
-[(1, 1.0000000000000506), (2, 0.21929714658095284), (3, 0.18123801274502657), (4, 0.11510371780308906), (5, 0.043704709234880686)]
+>>> risk.calc_cum_probs(battle_probs, attack=True)  # cumulative probs for attack's values
+OrderedDict([(1, 1.0000000000000506), (2, 0.21929714658095284), (3, 0.18123801274502657), (4, 0.11510371780308906), (5, 0.043704709234880686)])
 ```
 
 # Dependencies
