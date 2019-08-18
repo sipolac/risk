@@ -12,6 +12,7 @@ from itertools import product
 import argparse
 import random
 
+from risk import sh_printing
 from risk import utils
 
 
@@ -75,7 +76,14 @@ def calc_battle_probs(a, d, a_sides=6, d_sides=6, stop=1):
 
     Args:
         a (int): Number of troops on attacking territory
-        d (int): Number of troops on defending territory
+        d (list or int): Number of troops on defending territory. Use multiple
+            values for multiple territories
+        a_sides (list or int): Number of sides on attack dice. Use list of
+            values for multiple territories or single value to represent all
+            territories
+        d_sides (list or int): Number of sides on defense dice. Use list of
+            values for multiple territories or single value to represent all
+            territories
         stop (int): When attack has this many troops or fewer, stop
 
     Returns:
@@ -117,35 +125,16 @@ def calc_battle_probs(a, d, a_sides=6, d_sides=6, stop=1):
     return recur_helper(0, a, d_list[0])
 
 
-def calc_remaining_troops(t, a, d, d_list):
-    a_rem = a + t  # since 1 left on each conquered territory
-    d_rem = d + sum(d_list[t + 1:])
-    return a_rem, d_rem
-
-
 def calc_win_probs(battle_probs):
-    """Calculate win probabilities for each territory.
-
-    TODO:Clean up this function.
-    """
-    win_probs = defaultdict(int)
-    for (t, a, d), p in battle_probs.items():
-        for t_before in range(0, t):
-            win_probs[t_before] += p
+    """Calculate win probabilities for each territory."""
+    terr_probs = defaultdict(int)
+    for (t, a, d), p in sorted(battle_probs.items(), reverse=True):
         if d == 0:
-            win_probs[t] += p
-    return [p for k, p in sorted(win_probs.items())]
-
-
-# def calc_win_probs(battle_probs):
-#     """Calculate win probabilities for each territory."""
-#     win_probs = defaultdict(int)
-#     cum_prob = 0
-#     print(sorted(battle_probs.items(), reverse=True))
-#     for (t, a, d), p in sorted(battle_probs.items(), reverse=True):
-#         cum_prob += p
-#         win_probs[t] = cum_prob
-#     return [p for k, p in sorted(win_probs.items())]
+            t += 1  # pretending it's a new territory makes calcs easier
+        terr_probs[t] += p
+    # Take cumsum, cut off extra territory, and reverse.
+    win_probs = utils.cumsum(terr_probs.values())[:-1][::-1]
+    return win_probs
 
 
 def calc_cum_probs(battle_probs, d_list):
@@ -157,11 +146,11 @@ def calc_cum_probs(battle_probs, d_list):
             ((territory index, num. remaining, num. on territory), cum. prob)
     """
     def one_player(index):
-        lst = defaultdict(int)
+        dct = defaultdict(int)
         for (t, a, d), p in battle_probs.items():
-            rems = calc_remaining_troops(t, a, d, d_list)
-            lst[(t, rems[index], (a, d)[index])] += p
-        lst = sorted(lst.items(), key=lambda x: -x[0][1])  # sort on remaining
+            rems = utils.calc_remaining_troops(t, a, d, d_list)
+            dct[(t, rems[index], (a, d)[index])] += p
+        lst = sorted(dct.items(), key=lambda x: -x[0][1])  # sort on remaining
         cum = utils.cumsum([p for tup, p in lst])
         lst = list(zip([tup for tup, p in lst], cum))
         return lst
@@ -179,9 +168,8 @@ def calc_cum_probs(battle_probs, d_list):
 def simulate(a, d, a_sides=6, d_sides=6, stop=1, iters=10000):
     """Simulate battles (for sanity-checking).
 
-    Should take same inputs ans give same outputs as version that gives
-    exact answers, with exception of additional input of number of
-    iterations.
+    Should take same inputs and give same outputs as version that gives
+    exact answers, with exception of additional arg for number of iterations.
     """
     fixed = utils.fix_args(a, d, a_sides, d_sides, stop)
     d_list, a_sides_list, d_sides_list = fixed
@@ -190,12 +178,14 @@ def simulate(a, d, a_sides=6, d_sides=6, stop=1, iters=10000):
         d = d_list[0]
         t = 0
         while a > stop and d > 0:
+            # Get new attack and defense troop numbers.
             a_sides, d_sides = a_sides_list[t], d_sides_list[t]
             loss_key = min(3, a - 1), min(2, d)
             loss_probs = calc_loss_probs(a_sides, d_sides)[loss_key]
             vals, weights = zip(*loss_probs.items())
             a_loss, d_loss = random.choices(vals, weights)[0]
             a, d = a - a_loss, d - d_loss
+
             if d == 0 and a > stop and t < len(d_list) - 1:
                 # Move on to next territory.
                 t += 1
@@ -205,45 +195,6 @@ def simulate(a, d, a_sides=6, d_sides=6, stop=1, iters=10000):
     res = Counter([simulate_one(a, d_list) for _ in range(iters)])
     res = {tup: p / iters for tup, p in res.items()}  # turn into probs
     return res
-
-
-# -----------------------------------------------------------------------------
-# Printing
-# -----------------------------------------------------------------------------
-
-def print_battle_probs(battle_probs):
-    print('territory | attack | defense | exact probability')
-    battle_prob_list = sorted(battle_probs.items())
-    for (t, a, d), p in battle_prob_list:
-        print(f'{t + 1:>9} | {a:>6} |{d:>8} | {p}')
-
-
-def print_cum_probs(battle_probs, d_list):
-    atk, dfn = calc_cum_probs(battle_probs, d_list)
-    for index in range(2):
-        player_text = ['attack', 'defense'][index] + ' (cumulative)'
-        cum_probs = [atk, dfn][index]
-        print(f'{player_text.center(66, ".")}')
-        print(f'territory | troops on territory | troops remaining | cum. prob.')
-        for (t, rem, n), p in cum_probs:
-            print(f'{t + 1:>9} | {n:>19} | {rem:>16} | {p}')
-        if index == 0:
-            print()
-
-
-def print_win_probs(battle_probs):
-    win_probs = calc_win_probs(battle_probs)
-    print('territory | attack win probability')
-    for t, p in enumerate(win_probs):
-        print(f'{t + 1:>9} | {p}')
-
-
-def print_all(battle_probs, d_list):
-    print_battle_probs(battle_probs)
-    print()
-    print_cum_probs(battle_probs, d_list)
-    print()
-    print_win_probs(battle_probs)
 
 
 # -----------------------------------------------------------------------------
@@ -294,7 +245,9 @@ def main():
                                      args.stop)
 
     d_list = args.d if isinstance(args.d, list) else [args.d]
-    print_all(battle_probs, d_list)
+    cum_probs = calc_cum_probs(battle_probs, d_list)
+    win_probs = calc_win_probs(battle_probs)
+    sh_printing.print_all(battle_probs, *cum_probs, win_probs)
 
 
 if __name__ == '__main__':

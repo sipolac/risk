@@ -41,6 +41,12 @@ def combine_dict_probs(dict_list):
     return dict(combined)
 
 
+def calc_remaining_troops(t, a, d, d_list):
+    a_rem = a + t  # since 1 left on each conquered territory
+    d_rem = d + sum(d_list[t + 1:])
+    return a_rem, d_rem
+
+
 def cumsum(a):
     res = list()
     cum = 0

@@ -70,7 +70,7 @@ def test_calc_win_probs(win_probs):
 
 def test_calc_remaining_troops(params):
     def test(tup, d_list, expected):
-        actual = battle.calc_remaining_troops(*tup, d_list)
+        actual = utils.calc_remaining_troops(*tup, d_list)
         assert actual == expected
     a, d, a_sides, d_sides, stop = params
     test((0, 1, 1), d, (1, 3))
@@ -91,8 +91,6 @@ def test_calc_cum_probs(battle_probs, params):
     dfn_expected = [0.1311585, 0.2750526, 0.3583771,
                     0.6606328, 0.7499991, 1.0000000]
     atk, dfn = battle.calc_cum_probs(battle_probs, d)
-    print(atk)
-    print(dfn)
     for act, exp in zip([atk, dfn], [atk_expected, dfn_expected]):
         for p1, p2 in zip([p for tup, p in act], exp):
             assert isclose(p1, p2, rel_tol=PROB_REL_TOL)
