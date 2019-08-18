@@ -20,7 +20,8 @@ def print_cum_probs(atk, dfn):
         player_text = ['attack', 'defense'][index] + ' (cumulative)'
         cum_probs = [atk, dfn][index]
         print(f'{player_text.center(66, ".")}')
-        print(f'territory | troops on territory | troops remaining | cum. prob.')
+        print((f'territory | troops on territory | '
+               f'troops remaining | cumulative prob.'))
         for (t, rem, n), p in cum_probs:
             print(f'{t + 1:>9} | {n:>19} | {rem:>16} | {p}')
         if index == 0:

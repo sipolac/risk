@@ -14,8 +14,8 @@ from risk import battle
 from risk import utils
 
 
-PROB_REL_TOL = 1e-6
-PROB_REL_TOL_APPROX = 1e-1
+PROB_REL_TOL = 1e-6  # for comparison of "exact" probabilities
+PROB_REL_TOL_APPROX = 1e-1  # for comparison of approx probabilities
 
 
 @pytest.fixture
@@ -77,13 +77,6 @@ def test_calc_remaining_troops(params):
     test((1, 1, 1), d, (2, 1))
 
 
-def test_cumsum():
-    a = [2, 1, 3]
-    expected = [2, 3, 6]
-    actual = utils.cumsum(a)
-    assert actual == expected
-
-
 def test_calc_cum_probs(battle_probs, params):
     a, d, a_sides, d_sides, stop = params
     atk_expected = [0.0911264, 0.1861678, 0.2500009,
@@ -96,7 +89,7 @@ def test_calc_cum_probs(battle_probs, params):
             assert isclose(p1, p2, rel_tol=PROB_REL_TOL)
 
 
-def main(battle_probs, battle_probs_sim, params):
+def main(battle_probs, battle_probs_sim):
     """Spot check."""
     params_dict = dict(a=5,
                        d=[3, 2],
@@ -122,4 +115,4 @@ def main(battle_probs, battle_probs_sim, params):
 
 
 if __name__ == '__main__':
-    main(battle_probs, battle_probs_sim, params)
+    main(battle_probs, battle_probs_sim)

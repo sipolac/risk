@@ -125,15 +125,18 @@ def calc_battle_probs(a, d, a_sides=6, d_sides=6, stop=1):
     return recur_helper(0, a, d_list[0])
 
 
-def calc_win_probs(battle_probs):
-    """Calculate win probabilities for each territory."""
+def calc_win_probs(battle_probs, num_terr=None):
+    """Calculate attack's probability of conquering each territory."""
     terr_probs = defaultdict(int)
     for (t, a, d), p in sorted(battle_probs.items(), reverse=True):
         if d == 0:
-            t += 1  # pretending it's a new territory makes calcs easier
+            t += 1  # pretend it's a new territory to make calcs easier
         terr_probs[t] += p
-    # Take cumsum, cut off extra territory, and reverse.
+    # Take cumsum, cut off extra territory, and "un"-reverse.
     win_probs = utils.cumsum(terr_probs.values())[:-1][::-1]
+    if num_terr is not None:
+        # Append values for impossible territories.
+        win_probs += [0] * (num_terr - len(win_probs))
     return win_probs
 
 
@@ -146,13 +149,14 @@ def calc_cum_probs(battle_probs, d_list):
             ((territory index, num. remaining, num. on territory), cum. prob)
     """
     def one_player(index):
+        """index is 0 for attack, 1 for defense."""
         dct = defaultdict(int)
         for (t, a, d), p in battle_probs.items():
             rems = utils.calc_remaining_troops(t, a, d, d_list)
             dct[(t, rems[index], (a, d)[index])] += p
         lst = sorted(dct.items(), key=lambda x: -x[0][1])  # sort on remaining
-        cum = utils.cumsum([p for tup, p in lst])
-        lst = list(zip([tup for tup, p in lst], cum))
+        csum = utils.cumsum([p for tup, p in lst])
+        lst = list(zip([tup for tup, p in lst], csum))
         return lst
 
     atk = one_player(0)
@@ -246,7 +250,7 @@ def main():
 
     d_list = args.d if isinstance(args.d, list) else [args.d]
     cum_probs = calc_cum_probs(battle_probs, d_list)
-    win_probs = calc_win_probs(battle_probs)
+    win_probs = calc_win_probs(battle_probs, len(d_list))
     sh_printing.print_all(battle_probs, *cum_probs, win_probs)
 
 

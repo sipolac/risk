@@ -49,8 +49,8 @@ def calc_remaining_troops(t, a, d, d_list):
 
 def cumsum(a):
     res = list()
-    cum = 0
+    acc = 0
     for x in a:
-        cum += x
-        res.append(cum)
+        acc += x
+        res.append(acc)
     return res

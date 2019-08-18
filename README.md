@@ -5,10 +5,10 @@ This project has some functions for computing the probabilities of outcomes in t
 A few advantages of this implementation:
 * The probabilities are exact (doesn't use a simulator).
 * It runs quickly. Even for large inputs (e.g., 100 vs. 100), runtime is less than a second.
-* It can compute probabilities for **multiple territories**!
+* It can compute probabilities for attacks on **multiple territories**!
 * It can handle **dice bonuses** (e.g., a player rolling with 8-sided dice). This is helpful if you're playing on [warfish.net](www.warfish.net) or another platform that has user-created maps.
 * Allows user to specify when they want to stop attacking. This is useful if they want to guarantee a certain number of troops on the attacking territory after the engagement---maybe to defend against a different adjacent territory.
-* Under the hood, it uses dynamic programming, which is a bit cleaner than the direct implementation of a [Markov-based statistics approach](http://www4.stat.ncsu.edu/~jaosborn/research/RISK.pdf).
+* Under the hood, it uses dynamic programming, which is probably a bit cleaner than the direct implementation of a [Markov-based statistics approach](http://www4.stat.ncsu.edu/~jaosborn/research/RISK.pdf).
 
 Code is written in Python 3.7.4.
 
@@ -78,9 +78,9 @@ territory | attack win probability
 ```
 
 Let's add a few wrinkles:
-* You want to attack an additional territory, which has two troops on it.
-* This additional territory has a +2 bonus for defense (meaning defense rolls with 8-sided dice).
-* You want to stop when you have 2 troops or fewer.
+* If you defeat that territory, you then want to attack an additional territory, which has two troops in it.
+* This additional territory has a +2 bonus for defense, meaning defense rolls with 8-sided dice when defending that territory. The first territory still has no bonus.
+* You want to stop attacking when you have 2 troops or fewer.
 
 ```bash
 >>> python3 battle.py 5 3 2 --dsides 6 8 --stop 2
