@@ -6,27 +6,122 @@ Created: 2019-08-17
 
 Testing and spot checking Risk functions.
 """
-import risk
+from math import isclose
+
+import pytest
+
+from risk import battle
+from risk import utils
 
 
-def main():
-    """Spot check exact and simulation output."""
+PROB_REL_TOL = 1e-6
+PROB_REL_TOL_APPROX = 1e-1
+
+
+@pytest.fixture
+def params():
     a = 5
-    d = [4, 3]
+    d = [3, 2]
     a_sides = [6, 6]
     d_sides = [6, 6]
     stop = 1
+    return a, d, a_sides, d_sides, stop
 
-    print('simulation')
-    battle_probs = risk.simulate_battles(a, d, a_sides, d_sides, stop)
-    for k, v in sorted(battle_probs.items()):
-        print(k, v)
+
+@pytest.fixture
+def battle_probs(params):
+    return battle.calc_battle_probs(*params)
+
+
+@pytest.fixture
+def battle_probs_sim(params):
+    return battle.simulate(*params, 50000)
+
+
+@pytest.fixture
+def win_probs(battle_probs):
+    return battle.calc_win_probs(battle_probs)
+
+
+def test_calc_loss_probs():
+    def test(a_sides, d_sides, loss_key, outcome, expected):
+        actual = battle.calc_loss_probs(a_sides, d_sides)[loss_key][outcome]
+        isclose(actual, expected)
+    test(6, 6, (3, 2), (0, 2), 2890 / 7776)
+    test(3, 3, (3, 1), (1, 0), 4 / 9)
+
+
+def test_calc_battle_probs(battle_probs_sim, battle_probs):
+    assert isinstance(battle_probs, dict)
+    assert len(battle_probs) == 8
+    assert len(battle_probs) == len(battle_probs_sim)
+    battle_probs = sorted(battle_probs.items())
+    battle_probs_sim = sorted(battle_probs_sim.items())
+    for (tup1, p1), (tup2, p2) in zip(battle_probs, battle_probs_sim):
+        assert tup1 == tup2
+        assert isclose(p1, p2, rel_tol=PROB_REL_TOL_APPROX)
+
+
+def test_calc_win_probs(win_probs):
+    expected = [0.6416229, 0.2500009]
+    for p1, p2 in zip(win_probs, expected):
+        assert isclose(p1, p2, rel_tol=PROB_REL_TOL)
+
+
+def test_calc_remaining_troops(params):
+    def test(tup, d_list, expected):
+        actual = battle.calc_remaining_troops(*tup, d_list)
+        assert actual == expected
+    a, d, a_sides, d_sides, stop = params
+    test((0, 1, 1), d, (1, 3))
+    test((1, 1, 1), d, (2, 1))
+
+
+def test_cumsum():
+    a = [2, 1, 3]
+    expected = [2, 3, 6]
+    actual = utils.cumsum(a)
+    assert actual == expected
+
+
+def test_calc_cum_probs(battle_probs, params):
+    a, d, a_sides, d_sides, stop = params
+    atk_expected = [0.0911264, 0.1861678, 0.2500009,
+                    0.6416229, 1.0000000]
+    dfn_expected = [0.1311585, 0.2750526, 0.3583771,
+                    0.6606328, 0.7499991, 1.0000000]
+    atk, dfn = battle.calc_cum_probs(battle_probs, d)
+    print(atk)
+    print(dfn)
+    for act, exp in zip([atk, dfn], [atk_expected, dfn_expected]):
+        for p1, p2 in zip([p for tup, p in act], exp):
+            assert isclose(p1, p2, rel_tol=PROB_REL_TOL)
+
+
+def main(battle_probs, battle_probs_sim, params):
+    """Spot check."""
+    params_dict = dict(a=5,
+                       d=[3, 2],
+                       a_sides=[6, 6],
+                       d_sides=[6, 6],
+                       stop=1)
+    battle_probs = battle.calc_battle_probs(**params_dict)
+    params_dict['iters'] = 50000
+    battle_probs_sim = battle.simulate(**params_dict)
+
+    def print_probs(probs):
+        for k, v in sorted(probs.items()):
+            print(k, v)
 
     print('\nexact')
-    battle_probs = risk.calc_battle_probs(a, d, a_sides, d_sides, stop)
-    for k, v in sorted(battle_probs.items()):
-        print(k, v)
+    print_probs(battle_probs)
+
+    print('\nsimulated')
+    print_probs(battle_probs_sim)
+
+    print('\ncumulative probs')
+    battle.calc_cum_probs(battle_probs, params_dict['d'])
 
 
 if __name__ == '__main__':
-    main()
+    main(battle_probs, battle_probs_sim, params)

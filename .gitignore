@@ -5,3 +5,6 @@
 
 .vscode
 .ipynb_checkpoints
+
+env/
+risk.egg-info/

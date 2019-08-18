@@ -3,12 +3,12 @@
 This project has some functions for computing the probabilities of outcomes in the board game [Risk](https://en.wikipedia.org/wiki/Risk_(game)).
 
 A few advantages of this implementation:
-* The probabilities are exact (doesn't use a simulator)
+* The probabilities are exact (doesn't use a simulator).
 * It runs very quickly for typical inputs.
 * It can compute probabilities for **multiple territories**!
 * It can handle **dice bonuses** (e.g., a player rolling with 8-sided dice). This is helpful if you're playing on [warfish.net](warfish.net) or another platform that has user-created maps.
 * Allows user to specify when they want to stop attacking. This is useful if they want to guarantee a certain number of troops on the attacking territory after the engagement---maybe to defend against a different adjacent territory.
-* Under the hood, it's a bit cleaner than the direct implementation of a [Markov-based statistics approach](http://www4.stat.ncsu.edu/~jaosborn/research/RISK.pdf).
+* Under the hood, it uses dynamic programming, which is a bit cleaner than the direct implementation of a [Markov-based statistics approach](http://www4.stat.ncsu.edu/~jaosborn/research/RISK.pdf).
 
 Code is written in Python 3.7.4.
 
@@ -45,123 +45,92 @@ optional arguments:
 
 ## Command line
 
-For a battle where the attacking territory has 3 and the defending territory has 2:
+If you have 5 troops and you're attacking a territory with 3:
 
 ```bash
->>> python3 risk.py 3 2
-territory | attack | defense | probability
-        1 |      1 |       1 | 0.18904320987654322
-        1 |      1 |       2 | 0.44830246913580246
-        1 |      2 |       0 | 0.13503086419753088
-        1 |      3 |       0 | 0.22762345679012347
-................................................................
-territory |  attack | cumulative probability (at least)
-        1 |       1 | 1.0
-        1 |       2 | 0.3626543209876544
-        1 |       3 | 0.22762345679012347
-................................................................
-territory | defense | cumulative probability (at least)
-        1 |       0 | 1.0
-        1 |       1 | 0.6373456790123457
-        1 |       2 | 0.44830246913580246
-................................................................
-territory | win probability
-        1 | 0.3626543209876544
+>>> python3 battle.py 5 3
+territory | attack | defense | exact probability
+        1 |      1 |       1 | 0.08332453584748056
+        1 |      1 |       2 | 0.1438941163997636
+        1 |      1 |       3 | 0.13115845129680434
+        1 |      2 |       0 | 0.05951752560534325
+        1 |      3 |       0 | 0.12868912951264105
+        1 |      4 |       0 | 0.20822626934436866
+        1 |      5 |       0 | 0.24518997199359854
+
+.......................attack (cumulative)........................
+territory | troops on territory | troops remaining | cum. prob.
+        1 |                   5 |                5 | 0.24518997199359854
+        1 |                   4 |                4 | 0.4534162413379672
+        1 |                   3 |                3 | 0.5821053708506083
+        1 |                   2 |                2 | 0.6416228964559516
+        1 |                   1 |                1 | 1.0
+
+.......................defense (cumulative).......................
+territory | troops on territory | troops remaining | cum. prob.
+        1 |                   3 |                3 | 0.13115845129680434
+        1 |                   2 |                2 | 0.27505256769656794
+        1 |                   1 |                1 | 0.3583771035440485
+        1 |                   0 |                0 | 1.0
+
+territory | attack win probability
+        1 | 0.6416228964559516
 ```
 
-If there's an additional territory, which has one troop on it:
+Let's add a few wrinkles:
+* You want to attack an additional territory, which has two troops on it.
+* This additional territory has a +2 bonus for defense (meaning defense rolls with 8-sided dice).
+* You want to stop when you have 2 troops (or fewer), to be conservative.
 
 ```bash
->>> python3 risk.py 3 2 1
-territory | attack | defense | probability
-        1 |      1 |       1 | 0.18904320987654322
-        1 |      1 |       2 | 0.44830246913580246
-        2 |      1 |       1 | 0.26781121399176955
-        2 |      2 |       0 | 0.09484310699588479
-................................................................
-territory |  attack | cumulative probability (at least)
-        1 |       1 | 1.0
-        2 |       1 | 0.3626543209876543
-        2 |       2 | 0.09484310699588479
-................................................................
-territory | defense | cumulative probability (at least)
-        2 |       0 | 1.0
-        2 |       1 | 0.9051568930041153
-        1 |       1 | 0.6373456790123457
-        1 |       2 | 0.44830246913580246
-................................................................
-territory | win probability
-        1 | 0.3626543209876543
-        2 | 0.09484310699588479
+>>> python3 battle.py 5 3 2 --dsides 6 8 --stop 2
+territory | attack | defense | exact probability
+        1 |      1 |       3 | 0.13115845129680434
+        1 |      2 |       1 | 0.09368568628520269
+        1 |      2 |       2 | 0.19305049156738469
+        2 |      1 |       2 | 0.12372472340818008
+        2 |      2 |       1 | 0.10573379249943474
+        2 |      2 |       2 | 0.23799944471783396
+        2 |      3 |       0 | 0.063388800628705
+        2 |      4 |       0 | 0.05125860959646383
+
+.......................attack (cumulative)........................
+territory | troops on territory | troops remaining | cum. prob.
+        2 |                   4 |                5 | 0.05125860959646383
+        2 |                   3 |                4 | 0.11464741022516883
+        2 |                   2 |                3 | 0.4583806474424375
+        2 |                   1 |                2 | 0.5821053708506176
+        1 |                   2 |                2 | 0.8688415487032051
+        1 |                   1 |                1 | 1.0000000000000093
+
+.......................defense (cumulative).......................
+territory | troops on territory | troops remaining | cum. prob.
+        1 |                   3 |                5 | 0.13115845129680434
+        1 |                   2 |                4 | 0.324208942864189
+        1 |                   1 |                3 | 0.4178946291493917
+        2 |                   2 |                2 | 0.7796187972754057
+        2 |                   1 |                1 | 0.8853525897748404
+        2 |                   0 |                0 | 1.0000000000000093
+
+territory | attack win probability
+        1 | 0.5821053708506176
+        2 | 0.11464741022516883
 ```
 
-If that last territory has a defense bonus of +2 (i.e., a 8-sided die):
-
-```bash
->>> python3 risk.py 3 2 1 --dsides 6 8
-territory | attack | defense | probability
-        1 |      1 |       1 | 0.18904320987654322
-        1 |      1 |       2 | 0.44830246913580246
-        2 |      1 |       1 | 0.2915219907407408
-        2 |      2 |       0 | 0.07113233024691357
-................................................................
-territory |  attack | cumulative probability (at least)
-        1 |       1 | 1.0
-        2 |       1 | 0.3626543209876544
-        2 |       2 | 0.07113233024691357
-................................................................
-territory | defense | cumulative probability (at least)
-        2 |       0 | 1.0
-        2 |       1 | 0.9288676697530865
-        1 |       1 | 0.6373456790123457
-        1 |       2 | 0.44830246913580246
-................................................................
-territory | win probability
-        1 | 0.3626543209876544
-        2 | 0.07113233024691357
-```
-
-And if you (as attack) want to stop attacking when you have 2 or fewer troops:
-
-```bash
->>> python3 risk.py 3 2 1 --dsides 6 8 --stop 2
-territory | attack | defense | probability
-        1 |      1 |       2 | 0.44830246913580246
-        1 |      2 |       1 | 0.32407407407407407
-        2 |      2 |       1 | 0.22762345679012347
-................................................................
-territory |  attack | cumulative probability (at least)
-        1 |       1 | 1.0
-        1 |       2 | 0.5516975308641976
-        2 |       2 | 0.22762345679012347
-................................................................
-territory | defense | cumulative probability (at least)
-        2 |       1 | 1.0
-        1 |       1 | 0.7723765432098766
-        1 |       2 | 0.44830246913580246
-................................................................
-territory | win probability
-        1 | 0.22762345679012347
-```
 
 ## Python
 
 ```python
->>> import risk
->>> battle_probs = risk.calc_battle_probs(3, [2, 1], d_sides=[6, 8], stop=2)
+>>> from risk import battle
+>>> battle_probs = battle.calc_battle_probs(5, [3, 2], d_sides=[6, 8], stop=2)
 >>> battle_probs  # key is (territory, attack, defense)
-{(1, 2, 1): 0.22762345679012347, (0, 1, 2): 0.44830246913580246, (0, 2, 1): 0.32407407407407407}
->>> risk.calc_win_prob(battle_probs)  # indexed by territory
-[0.22762345679012347]
->>> risk.calc_cum_probs(battle_probs, attack=True)  # cumulative for attack
-OrderedDict([((0, 1), 1.0), ((0, 2), 0.5516975308641976), ((1, 2), 0.22762345679012347)])
+{(1, 2, 2): 0.23799944471783396, (1, 2, 1): 0.10573379249943474, (1, 3, 0): 0.063388800628705, (1, 4, 0): 0.05125860959646383, (1, 1, 2): 0.12372472340818008, (0, 2, 1): 0.09368568628520269, (0, 1, 3): 0.13115845129680434, (0, 2, 2): 0.19305049156738469}
+>>> battle.calc_win_probs(battle_probs)  # indexed by territory
+[0.5821053708506176, 0.11464741022516883]
 ```
+
+See function `battle.calc_cum_probs` for computing cumulative frequencies. For a version of `battle.calc_battle_probs` that uses simulation to compute *approximate* probabilities, see `battle.simulate`.
+
 
 # Dependencies
 None
-
-
-# TODO
-* Think of a better way to compute/display cumulative probabilities
-* Clean up code for printing
-* Write tests, not just spot check vs. simulator
