@@ -167,7 +167,7 @@ With verbosity (`-v`), you can see the values tested:
 >>> battle_probs.win  # indexed by territory
 [0.64162289645596, 0.15834186479813744, 0.06507349013892291]
 >>> battle_probs.cumul.attack
-[(Cumul(terr_idx=2, troops_total=5, troops=3), 0.029663547220175827), (Cumul(terr_idx=2, troops_total=4, troops=2), 0.06507349013892291), (Cumul(terr_idx=2, troops_total=3, troops=1), 0.15834186479813744), (Cumul(terr_idx=1, troops_total=2, troops=1), 0.64162289645596), (Cumul(terr_idx=0, troops_total=1, troops=1), 1.0000000000000084)]
+[(CumulOutcome(terr_idx=2, troops_total=5, troops=3), 0.029663547220175827), (CumulOutcome(terr_idx=2, troops_total=4, troops=2), 0.06507349013892291), (CumulOutcome(terr_idx=2, troops_total=3, troops=1), 0.15834186479813744), (CumulOutcome(terr_idx=1, troops_total=2, troops=1), 0.64162289645596), (CumulOutcome(terr_idx=0, troops_total=1, troops=1), 1.0000000000000084)]
 ```
 
 Use function `min_troops.find_min_troops` to (as you might guess) find min troops, as described above. For a version of `battle.calc_probs` that uses simulation to compute *approximate* probabilities, see `battle.calc_probs_sim`.

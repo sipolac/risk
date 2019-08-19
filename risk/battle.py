@@ -17,9 +17,9 @@ from risk import printing
 from risk import utils
 
 
-Outcome = namedtuple('Dist', 'terr_idx a_troops d_troops')
+Outcome = namedtuple('Outcome', 'terr_idx a_troops d_troops')
 CumulStats = namedtuple('CumulStats', 'attack defense')
-CumulOutcome = namedtuple('Cumul', 'terr_idx troops_total troops')
+CumulOutcome = namedtuple('CumulOutcome', 'terr_idx troops_total troops')
 
 
 class BattleConfig(object):
