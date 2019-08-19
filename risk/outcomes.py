@@ -215,6 +215,7 @@ def main():
     parser.add_argument('--asides', **argdefs.asides)
     parser.add_argument('--dsides', **argdefs.dsides)
     parser.add_argument('--stop', **argdefs.stop)
+    parser.add_argument('--all', **argdefs._all)
     args = parser.parse_args()
 
     argdefs.clean_args(args)
@@ -224,9 +225,12 @@ def main():
                                      args.stop)
 
     d_list = args.d if isinstance(args.d, list) else [args.d]
-    cum_probs = calc_cum_probs(battle_probs, d_list)
     win_probs = calc_win_probs(battle_probs, len(d_list))
-    printing.print_all(battle_probs, *cum_probs, win_probs)
+    if args.all:
+        cum_probs = calc_cum_probs(battle_probs, d_list)
+        printing.print_all(battle_probs, *cum_probs, win_probs)
+    else:
+        printing.print_win_probs(win_probs)
 
 
 if __name__ == '__main__':

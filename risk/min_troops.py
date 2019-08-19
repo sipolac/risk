@@ -91,7 +91,6 @@ def main():
     parser.add_argument('-v', '--verbose', **argdefs.v)
     args = parser.parse_args()
 
-    args.verbose = min(args.verbose, 1)
     log_level = {0: 'WARNING', 1: 'INFO'}.get(args.verbose, 1)
 
     log_fmt = '%(asctime)s - %(message)s'

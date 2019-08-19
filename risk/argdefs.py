@@ -35,6 +35,11 @@ stop = dict(
     type=int,
     help='when attack has this many troops or fewer, stop'
 )
+_all = dict(
+    action='store_true',
+    default=False,
+    help='show all values'
+)
 v = dict(
     action='count',
     default=0,

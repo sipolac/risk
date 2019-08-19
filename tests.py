@@ -10,6 +10,7 @@ from math import isclose
 
 import pytest
 
+from risk import min_troops
 from risk import outcomes
 from risk import utils
 
@@ -87,6 +88,17 @@ def test_calc_cum_probs(battle_probs, params):
     for act, exp in zip([atk, dfn], [atk_expected, dfn_expected]):
         for p1, p2 in zip([p for tup, p in act], exp):
             assert isclose(p1, p2, rel_tol=PROB_REL_TOL)
+
+
+def test_find_min_troops():
+    def test(target, battle_args, a_expected, p_expected):
+        a, p = min_troops.find_min_troops(target, battle_args)
+        assert a == a_expected
+        assert isclose(p, p_expected, rel_tol=PROB_REL_TOL)
+
+    test(0.5, dict(d=11), 12, 0.5762944972440298)
+    test(0.95, dict(d=11), 21, 0.9616912565871958)
+    test(0.5, dict(d=11, d_sides=8), 19, 0.5070879747303201)
 
 
 def main(battle_probs, battle_probs_sim):

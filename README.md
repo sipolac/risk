@@ -4,11 +4,11 @@ This project has some functions for computing the probabilities of battle outcom
 
 A few advantages of this implementation:
 * The probabilities are exact (doesn't use a simulator).
-* It runs quickly. Even for large inputs (e.g., 100 vs. 100), runtime is less than a second.
 * It can compute probabilities for attacks on **multiple territories**!
 * It can handle **dice bonuses** (e.g., a player rolling with 8-sided dice). This is helpful if you're playing on [warfish.net](www.warfish.net) or another platform that has user-created maps.
 * Allows user to specify when they want to stop attacking. This is useful if they want to guarantee a certain number of troops on the attacking territory after the engagement—maybe to defend against a different adjacent territory.
 * Under the hood, it uses dynamic programming, which is probably a bit cleaner than using matrix algebra (e.g., a direct implementation of [this paper](http://www4.stat.ncsu.edu/~jaosborn/research/RISK.pdf)).
+* It runs quickly. Even for large inputs (e.g., 100 vs. 100), runtime is less than a second.
 
 I've also included a function that helps you find the smallest number of troops that would guarantee a win probability that is *at least* some target probability. This is useful for deciding where to allocate troops at the beginning of a turn.
 
@@ -17,11 +17,12 @@ Code is written in Python 3.7.4.
 
 # Arguments
 
-See help: `python3 outcomes.py -h`
+See help:
 
 ```
+>>> python3 outcomes.py -h
 usage: outcomes.py [-h] [--asides [ASIDES [ASIDES ...]]]
-                   [--dsides [DSIDES [DSIDES ...]]] [--stop STOP]
+                   [--dsides [DSIDES [DSIDES ...]]] [--stop STOP] [--all]
                    a d [d ...]
 
 positional arguments:
@@ -40,6 +41,7 @@ optional arguments:
                         for multiple territories or single value to represent
                         all territories
   --stop STOP           when attack has this many troops or fewer, stop
+  --all                 show all values
 ```
 
 
@@ -53,6 +55,14 @@ If you have 5 troops and you're attacking a territory with 3 troops:
 
 ```
 >>> python3 outcomes.py 5 3
+territory | attack win probability
+        1 | 0.6416228964559516
+```
+
+To show all values (`--all`):
+
+```
+>>> python3 outcomes.py 5 3 --all
 territory | attack | defense | exact probability
         1 |      1 |       1 | 0.08332453584748056
         1 |      1 |       2 | 0.1438941163997636
@@ -86,7 +96,7 @@ Let's add a few wrinkles:
 * The second of the three territories has a +2 defense bonus, meaning defense rolls with **8-sided dice** when defending that territory.
 
 ```
->>> python3 outcomes.py 5 3 2 1 --dsides 6 8 6
+>>> python3 outcomes.py 5 3 2 1 --dsides 6 8 6 --all
 territory | attack | defense | exact probability
         1 |      1 |       1 | 0.08332453584748056
         1 |      1 |       2 | 0.1438941163997636
@@ -124,14 +134,14 @@ territory | attack win probability
 
 ### Troop allocation
 
-If you want to *find* the minimum number of attack troops that would guarantee victory with at least 0.95 probability in the above scenario, we could do the following:
+If you want to *find* the minimum number of attack troops that would guarantee victory with at least 0.95 probability in the above scenario, you could do the following:
 
 ```
 >>> python3 min_troops.py 0.95 3 2 1 --dsides 6 8 6
 17 troops gives a win probability of 0.953038445204023
 ```
 
-With verbosity (`-v`), we can see the values tested:
+With verbosity (`-v`), you can see the values tested:
 
 ```
 >>> python3 min_troops.py 0.95 3 2 1 --dsides 6 8 6 -v
