@@ -161,7 +161,7 @@ def calc_loss_probs(a_sides, d_sides):
     return loss_probs
 
 
-def calc_battle_probs(a, d, a_sides=6, d_sides=6, stop=1):
+def calc_probs(a, d, a_sides=6, d_sides=6, stop=1):
     """Get probability of all outcomes.
 
     Args:
@@ -228,7 +228,7 @@ def calc_battle_probs(a, d, a_sides=6, d_sides=6, stop=1):
 # -----------------------------------------------------------------------------
 
 
-def simulate(a, d, a_sides=6, d_sides=6, stop=1, iters=10000):
+def calc_probs_sim(a, d, a_sides=6, d_sides=6, stop=1, iters=10000):
     """Simulate battles (for sanity-checking).
 
     Should take same inputs and give same outputs as version that gives
@@ -277,7 +277,7 @@ def main():
     utils.clean_argparse(args)
     cfg = BattleConfig(args.a, args.d, args.asides, args.dsides, args.stop)
 
-    battle_probs = calc_battle_probs(**cfg.args)
+    battle_probs = calc_probs(**cfg.args)
 
     if args.all:
         printing.print_all(battle_probs)

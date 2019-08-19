@@ -161,7 +161,7 @@ With verbosity (`-v`), you can see the values tested:
 
 ```python
 >>> from risk import battle
->>> battle_probs = battle.calc_battle_probs(a=5, d=[3, 2, 1], d_sides=[6, 8, 6])
+>>> battle_probs = battle.calc_probs(a=5, d=[3, 2, 1], d_sides=[6, 8, 6])
 >>> battle_probs.dist
 {Outcome(terr_idx=1, a_troops=1, d_troops=2): 0.38715323159729165, Outcome(terr_idx=1, a_troops=1, d_troops=1): 0.09612780006053091, Outcome(terr_idx=2, a_troops=1, d_troops=1): 0.09326837465921452, Outcome(terr_idx=2, a_troops=2, d_troops=0): 0.03540994291874709, Outcome(terr_idx=2, a_troops=3, d_troops=0): 0.029663547220175827, Outcome(terr_idx=0, a_troops=1, d_troops=1): 0.08332453584748056, Outcome(terr_idx=0, a_troops=1, d_troops=3): 0.13115845129680434, Outcome(terr_idx=0, a_troops=1, d_troops=2): 0.1438941163997636}
 >>> battle_probs.win  # indexed by territory
@@ -170,7 +170,7 @@ With verbosity (`-v`), you can see the values tested:
 [(Cumul(terr_idx=2, troops_total=5, troops=3), 0.029663547220175827), (Cumul(terr_idx=2, troops_total=4, troops=2), 0.06507349013892291), (Cumul(terr_idx=2, troops_total=3, troops=1), 0.15834186479813744), (Cumul(terr_idx=1, troops_total=2, troops=1), 0.64162289645596), (Cumul(terr_idx=0, troops_total=1, troops=1), 1.0000000000000084)]
 ```
 
-Use function `min_troops.find_min_troops` to (as you might guess) find min troops, as described above. For a version of `battle.calc_battle_probs` that uses simulation to compute *approximate* probabilities, see `battle.simulate`.
+Use function `min_troops.find_min_troops` to (as you might guess) find min troops, as described above. For a version of `battle.calc_probs` that uses simulation to compute *approximate* probabilities, see `battle.calc_probs_sim`.
 
 
 # Dependencies

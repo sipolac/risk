@@ -26,12 +26,12 @@ def config():
 
 @pytest.fixture
 def battle_probs(config):
-    return battle.calc_battle_probs(**config.args)
+    return battle.calc_probs(**config.args)
 
 
 @pytest.fixture
 def battle_probs_sim(config):
-    return battle.simulate(**config.args, iters=50000)
+    return battle.calc_probs_sim(**config.args, iters=50000)
 
 
 def test_calc_loss_probs():
@@ -100,9 +100,9 @@ def main():
                 a_sides=[6, 6],
                 d_sides=[6, 6],
                 stop=1)
-    battle_probs = battle.calc_battle_probs(**args)
+    battle_probs = battle.calc_probs(**args)
     args['iters'] = 50000
-    battle_probs_sim = battle.simulate(**args)
+    battle_probs_sim = battle.calc_probs_sim(**args)
 
     def print_probs(probs):
         for k, v in sorted(probs.items()):

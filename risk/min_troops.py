@@ -28,7 +28,7 @@ def find_min_troops(target, battle_args, hi_start=8, logger=None):
 
     Args:
         target (float): Win probability should be above this target
-        battle_args (dict): Args to be passed to calc_battle_probs
+        battle_args (dict): Args to be passed to calc_probs
         hi_start (int): Starting upper bound on number of attack troops. If
             it's too low, it'll be increased
         logger (logger): Logger
@@ -41,7 +41,7 @@ def find_min_troops(target, battle_args, hi_start=8, logger=None):
 
     def calc_prob(a):
         battle_args['a'] = a
-        return battle.calc_battle_probs(**battle_args).win[-1]
+        return battle.calc_probs(**battle_args).win[-1]
 
     lo, hi = 1, hi_start
 
