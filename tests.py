@@ -71,7 +71,7 @@ def test_calc_remaining_troops(config):
     test((1, 1, 1), config.d, (2, 1))
 
 
-def test_calc_cum_probs(battle_probs):
+def test_calc_cumul_probs(battle_probs):
     atk_expected = [0.0911264, 0.1861678, 0.2500009,
                     0.6416229, 1.0000000]
     dfn_expected = [0.1311585, 0.2750526, 0.3583771,
@@ -83,10 +83,10 @@ def test_calc_cum_probs(battle_probs):
 
 
 def test_find_min_troops():
-    def test(target, battle_args, a_expected, p_expected):
-        a, p = min_troops.find_min_troops(target, battle_args)
-        assert a == a_expected
-        assert isclose(p, p_expected, rel_tol=PROB_REL_TOL)
+    def test(target, battle_args, troops_expected, p_expected):
+        actual = min_troops.find_min_troops(target, battle_args)
+        assert actual.troops == troops_expected
+        assert isclose(actual.win_prob, p_expected, rel_tol=PROB_REL_TOL)
 
     test(0.5, dict(d=11), 12, 0.5762944972440298)
     test(0.95, dict(d=11), 21, 0.9616912565871958)
@@ -114,9 +114,9 @@ def main():
     print('\nsimulated')
     print_probs(battle_probs_sim.dist)
 
-    print('\ncumulative probs (exact')
+    print('\ncumulative probs (exact)')
     for i, probs in enumerate(battle_probs.cumul):
-        print(f'----{i}----')
+        print(f'----{["attack", "defense"][i]}----')
         for (k, v) in probs:
             print(k, v)
 

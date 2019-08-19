@@ -23,7 +23,7 @@ CumulOutcome = namedtuple('CumulOutcome', 'terr_idx troops_total troops')
 
 
 class BattleConfig(object):
-    """Battle configuration."""
+    """Battle configuration: the parameters that define an interaction."""
     def __init__(self, a, d, a_sides, d_sides, stop):
         # Original inputs.
         self.a = a
@@ -43,7 +43,7 @@ class BattleConfig(object):
 
     @staticmethod
     def broadcast_arg(val, n):
-        """Fix arguments so that single values get broadcasted into a list."""
+        """Broadcast into a list if not done already."""
         if isinstance(val, int):
             val = [val] * n
         assert len(val) == n
@@ -69,15 +69,13 @@ class BattleProbs(object):
         """Calculate cumulative probabilities for attack and defense.
 
         Returns:
-            (tuple) Two tuples (first for attack, second for defense) that
-                consist of lists, which themselves have tuples of this form:
-                ((territory index, num. remaining, num. on territory), cum.
-                prob)
+            (CumulStats) Namedtuple of attack and defense cumulative probs
         """
         def one_player(index):
             """index is 0 for attack, 1 for defense."""
             dct = defaultdict(int)
             for (t, a, d), p in self.dist.items():
+                # t, a, d is territory index, attack troops, defense troops.
                 rems = self._calc_remaining_troops(t, a, d, self.cfg.d_list)
                 dct[(t, rems[index], (a, d)[index])] += p
             lst = sorted(dct.items(), key=lambda x: -x[0][1])  # sort on rem
@@ -142,7 +140,7 @@ def calc_loss_probs(a_sides, d_sides):
     for a_rolls, d_rolls in product(range(1, 4), range(1, 3)):
         loss_probs_rolls = defaultdict(int)
 
-        # Generate all combos.
+        # Enumerate all possible roll results.
         a_roll_vals = list(range(1, a_sides + 1))
         d_roll_vals = list(range(1, d_sides + 1))
         iters = [a_roll_vals] * a_rolls + [d_roll_vals] * d_rolls
@@ -182,12 +180,12 @@ def calc_probs(a, d, a_sides=6, d_sides=6, stop=1):
     """
     cfg = BattleConfig(a, d, a_sides, d_sides, stop)
 
-    def combine_dict_probs(dict_list):
-        """Combine list dicts into single dict, summing probabilies."""
+    def combine_dict_probs(dist_list):
+        """Combine list of dicts into single dict, summing probabilies."""
         combined = defaultdict(int)
-        for dct in dict_list:
-            for key, prob in dct.items():
-                combined[key] += prob
+        for dct in dist_list:
+            for outcome, p in dct.items():
+                combined[outcome] += p
         return dict(combined)
 
     @lru_cache(maxsize=None)
@@ -200,32 +198,25 @@ def calc_probs(a, d, a_sides=6, d_sides=6, stop=1):
         a_sides, d_sides = cfg.a_sides_list[t], cfg.d_sides_list[t]
         loss_key = min(3, a - 1), min(2, d)
         loss_probs = calc_loss_probs(a_sides, d_sides)[loss_key]
-        probs_list = list()
-        for (a_loss, d_loss), p2 in loss_probs.items():
-            a2, d2 = a - a_loss, d - d_loss  # new attack and defense counts
+        dist_list = list()
+        for (a_loss, d_loss), p_upstream in loss_probs.items():
+            a_new, d_new = a - a_loss, d - d_loss
 
-            if d2 == 0 and a2 > stop and t < cfg.num_terr - 1:
-                # Move on to next territory.
-                t2 = t + 1
-                a2, d2 = a2 - 1, cfg.d_list[t2]
+            if d_new == 0 and a_new > stop and t < cfg.num_terr - 1:
+                # Move on to next territory. Need to leave one troop behind.
+                new = recur_helper(t + 1, a_new - 1, cfg.d_list[t + 1])
             else:
-                t2 = t
-            new = recur_helper(t2, a2, d2)  # memoized from lru_cache
+                new = recur_helper(t, a_new, d_new)
 
             # Multiply by upstream probability.
-            new = {tup: p * p2 for tup, p in new.items()}
-            probs_list.append(new)
+            new = {outcome: p_upstream * p for outcome, p in new.items()}
+            dist_list.append(new)
 
-        dist = combine_dict_probs(probs_list)
+        dist = combine_dict_probs(dist_list)
         return dist
 
     dist = recur_helper(0, a, cfg.d_list[0])
     return BattleProbs(dist, cfg)
-
-
-# -----------------------------------------------------------------------------
-# Simulation, for sanity-checks
-# -----------------------------------------------------------------------------
 
 
 def calc_probs_sim(a, d, a_sides=6, d_sides=6, stop=1, iters=10000):
@@ -257,11 +248,6 @@ def calc_probs_sim(a, d, a_sides=6, d_sides=6, stop=1, iters=10000):
     dist = Counter([simulate_one(a) for _ in range(iters)])
     dist = {tup: p / iters for tup, p in dist.items()}  # turn into probs
     return BattleProbs(dist, cfg)
-
-
-# -----------------------------------------------------------------------------
-# Main
-# -----------------------------------------------------------------------------
 
 
 def main():

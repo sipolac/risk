@@ -15,10 +15,25 @@ I've also included a function that helps you find the smallest number of troops 
 Code is written in Python 3.7.4.
 
 
+# Table of contents
+
+- [Arguments](#args)
+- [Examples](#examples)
+  - [Command line](#cmd)
+    - [Battle outcomes](#cmd_outcomes)
+    - [Troop allocation](#cmd_alloc)
+  - [Python](#py)
+    - [Battle outcomes](#py_outcomes)
+    - [Troop allocation](#py_alloc)
+    - [Other](#py_other)
+- [Dependencies](#dependencies)
+
+
+<a name="args"/>
+
 # Arguments
 
-See help:
-
+For battle probabilties:
 ```
 >>> python3 battle.py -h
 usage: battle.py [-h] [--asides [ASIDES [ASIDES ...]]]
@@ -44,14 +59,45 @@ optional arguments:
   --all                 show all values
 ```
 
+For troop allocation (described [below](#cmd_alloc)):
+```
+>>> python3 min_troops.py -h
+usage: min_troops.py [-h] [--asides [ASIDES [ASIDES ...]]]
+                     [--dsides [DSIDES [DSIDES ...]]] [--stop STOP] [-v]
+                     target d [d ...]
+
+positional arguments:
+  target                desired probability of winning
+  d                     number of troops on defending territory; use multiple
+                        values for multiple territories
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --asides [ASIDES [ASIDES ...]]
+                        number of sides on attack dice; use multiple values
+                        for multiple territories or single value to represent
+                        all territories
+  --dsides [DSIDES [DSIDES ...]]
+                        number of sides on defense dice; use multiple values
+                        for multiple territories or single value to represent
+                        all territories
+  --stop STOP           when attack has this many troops or fewer, stop
+  -v, --verbose         verbosity
+```
+
+<a name="examples"/>
 
 # Examples
 
+<a name="cmd"/>
+
 ## Command line
+
+<a name="cmd_outcomes"/>
 
 ### Battle outcomes
 
-If you have 5 troops and you're attacking a territory with 3 troops:
+If you have 5 troops and you're attacking a territory with 3 troops, the probability of overtaking the territory is:
 
 ```
 >>> python3 battle.py 5 3
@@ -59,11 +105,11 @@ territory | attack win probability
         1 | 0.6416228964559516
 ```
 
-To show all values (`--all`):
+To show all outcome probabilities (`--all`):
 
 ```
 >>> python3 battle.py 5 3 --all
-territory | attack | defense | exact probability
+territory | attack | defense | probability
         1 |      1 |       1 | 0.08332453584748056
         1 |      1 |       2 | 0.1438941163997636
         1 |      1 |       3 | 0.13115845129680434
@@ -97,7 +143,7 @@ Let's add a few wrinkles:
 
 ```
 >>> python3 battle.py 5 3 2 1 --dsides 6 8 6 --all
-territory | attack | defense | exact probability
+territory | attack | defense | probability
         1 |      1 |       1 | 0.08332453584748056
         1 |      1 |       2 | 0.1438941163997636
         1 |      1 |       3 | 0.13115845129680434
@@ -131,6 +177,7 @@ territory | attack win probability
         3 | 0.06507349013892291
 ```
 
+<a name="cmd_alloc"/>
 
 ### Troop allocation
 
@@ -157,7 +204,15 @@ With verbosity (`-v`), you can see the values tested:
 ```
 
 
+<a name="py"/>
+
 ## Python
+
+<a name="py_outcomes"/>
+
+### Battle outcomes
+
+Using the scenario from above:
 
 ```python
 >>> from risk import battle
@@ -168,10 +223,35 @@ With verbosity (`-v`), you can see the values tested:
 [0.64162289645596, 0.15834186479813744, 0.06507349013892291]
 >>> battle_probs.cumul.attack
 [(CumulOutcome(terr_idx=2, troops_total=5, troops=3), 0.029663547220175827), (CumulOutcome(terr_idx=2, troops_total=4, troops=2), 0.06507349013892291), (CumulOutcome(terr_idx=2, troops_total=3, troops=1), 0.15834186479813744), (CumulOutcome(terr_idx=1, troops_total=2, troops=1), 0.64162289645596), (CumulOutcome(terr_idx=0, troops_total=1, troops=1), 1.0000000000000084)]
+>>> from risk import printing
+>>> printing.print_win_probs(battle_probs)  # one of a few printing functions
+territory | attack win probability
+        1 | 0.64162289645596
+        2 | 0.15834186479813744
+        3 | 0.06507349013892291
 ```
 
-Use function `min_troops.find_min_troops` to (as you might guess) find min troops, as described above. For a version of `battle.calc_probs` that uses simulation to compute *approximate* probabilities, see `battle.calc_probs_sim`.
 
+<a name="py_alloc"/>
+
+### Troop allocation
+
+Again, using the scenario above:
+
+```python
+>>> from risk import min_troops
+>>> min_troops.find_min_troops(0.95, dict(d=[3, 2, 1], d_sides=[6, 8, 6]))
+MinTroops(troops=17, win_prob=0.953038445204023)
+```
+
+<a name="py_other"/>
+
+### Other
+
+For a version of `risk.battle.calc_probs` that uses simulation to compute *approximate* probabilities, see `risk.battle.calc_probs_sim`. For the printing functions used for the shell, see `risk.printing`.
+
+
+<a name="dependencies"/>
 
 # Dependencies
 None
