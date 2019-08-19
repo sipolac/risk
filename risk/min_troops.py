@@ -10,7 +10,8 @@ import argparse
 import logging
 
 from risk import argdefs
-from risk import outcomes
+from risk import battle
+from risk import utils
 
 
 def find_min_troops(target, battle_args, hi_start=8, logger=None):
@@ -38,14 +39,9 @@ def find_min_troops(target, battle_args, hi_start=8, logger=None):
     assert 0 < target < 1
     logger = logger or logging.getLogger(__name__)
 
-    d = battle_args['d']
-    num_terr = 1 if isinstance(d, int) else len(d)
-
     def calc_prob(a):
         battle_args['a'] = a
-        battle_probs = outcomes.calc_battle_probs(**battle_args)
-        p = outcomes.calc_win_probs(battle_probs, num_terr)[-1]  # last territory
-        return p
+        return battle.calc_battle_probs(**battle_args).win[-1]
 
     lo, hi = 1, hi_start
 
@@ -62,7 +58,7 @@ def find_min_troops(target, battle_args, hi_start=8, logger=None):
     while lo <= hi:
         mid = (lo + hi) // 2
         p = calc_prob(mid)
-        logger.info(f'{mid} (within bounds {lo} and {hi}) gives {p}')
+        logger.info(f'{mid} (midpoint of {lo} and {hi}) gives {p}')
         if p < target:
             lo = mid + 1
         elif p > target:
@@ -97,7 +93,7 @@ def main():
     logging.basicConfig(level=log_level, format=log_fmt)
     logger = logging.getLogger(__name__)
 
-    argdefs.clean_args(args)
+    utils.clean_argparse(args)
     battle_args = dict(d=args.d,
                        a_sides=args.asides,
                        d_sides=args.dsides,

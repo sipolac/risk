@@ -10,15 +10,15 @@ Printing for shell.
 
 def print_battle_probs(battle_probs):
     print('territory | attack | defense | exact probability')
-    battle_prob_list = sorted(battle_probs.items())
+    battle_prob_list = sorted(battle_probs.dist.items())
     for (t, a, d), p in battle_prob_list:
         print(f'{t + 1:>9} | {a:>6} |{d:>8} | {p}')
 
 
-def print_cum_probs(atk, dfn):
+def print_cum_probs(battle_probs):
     for index in range(2):
         player_text = ['attack', 'defense'][index] + ' (cumulative)'
-        cum_probs = [atk, dfn][index]
+        cum_probs = battle_probs.cumul[index]
         print(f'{player_text.center(66, ".")}')
         print((f'territory | troops on territory | '
                f'troops remaining | cumulative prob.'))
@@ -28,15 +28,15 @@ def print_cum_probs(atk, dfn):
             print()
 
 
-def print_win_probs(win_probs):
+def print_win_probs(battle_probs):
     print('territory | attack win probability')
-    for t, p in enumerate(win_probs):
+    for t, p in enumerate(battle_probs.win):
         print(f'{t + 1:>9} | {p}')
 
 
-def print_all(battle_probs, atk, dfn, win_probs):
+def print_all(battle_probs):
     print_battle_probs(battle_probs)
     print()
-    print_cum_probs(atk, dfn)
+    print_cum_probs(battle_probs)
     print()
-    print_win_probs(win_probs)
+    print_win_probs(battle_probs)

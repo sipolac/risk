@@ -45,12 +45,3 @@ v = dict(
     default=0,
     help='verbosity'
 )
-
-
-def clean_args(args):
-    if len(args.d) == 1:
-        args.d = args.d[0]
-    if isinstance(args.asides, list) and len(args.asides) == 1:
-        args.asides = args.asides[0]
-    if isinstance(args.dsides, list) and len(args.dsides) == 1:
-        args.dsides = args.dsides[0]

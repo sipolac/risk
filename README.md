@@ -20,10 +20,10 @@ Code is written in Python 3.7.4.
 See help:
 
 ```
->>> python3 outcomes.py -h
-usage: outcomes.py [-h] [--asides [ASIDES [ASIDES ...]]]
-                   [--dsides [DSIDES [DSIDES ...]]] [--stop STOP] [--all]
-                   a d [d ...]
+>>> python3 battle.py -h
+usage: battle.py [-h] [--asides [ASIDES [ASIDES ...]]]
+                 [--dsides [DSIDES [DSIDES ...]]] [--stop STOP] [--all]
+                 a d [d ...]
 
 positional arguments:
   a                     number of troops on attacking territory
@@ -54,7 +54,7 @@ optional arguments:
 If you have 5 troops and you're attacking a territory with 3 troops:
 
 ```
->>> python3 outcomes.py 5 3
+>>> python3 battle.py 5 3
 territory | attack win probability
         1 | 0.6416228964559516
 ```
@@ -62,7 +62,7 @@ territory | attack win probability
 To show all values (`--all`):
 
 ```
->>> python3 outcomes.py 5 3 --all
+>>> python3 battle.py 5 3 --all
 territory | attack | defense | exact probability
         1 |      1 |       1 | 0.08332453584748056
         1 |      1 |       2 | 0.1438941163997636
@@ -96,7 +96,7 @@ Let's add a few wrinkles:
 * The second of the three territories has a +2 defense bonus, meaning defense rolls with **8-sided dice** when defending that territory.
 
 ```
->>> python3 outcomes.py 5 3 2 1 --dsides 6 8 6 --all
+>>> python3 battle.py 5 3 2 1 --dsides 6 8 6 --all
 territory | attack | defense | exact probability
         1 |      1 |       1 | 0.08332453584748056
         1 |      1 |       2 | 0.1438941163997636
@@ -149,10 +149,10 @@ With verbosity (`-v`), you can see the values tested:
 2019-08-19 00:12:27,129 - not high enough; trying range 9 to 16...
 2019-08-19 00:12:27,130 - not high enough; trying range 17 to 32...
 2019-08-19 00:12:27,134 - searching for number of troops...
-2019-08-19 00:12:27,136 - 24 (within bounds 17 to 32) gives 0.9964873460982187
-2019-08-19 00:12:27,139 - 20 (within bounds 17 to 23) gives 0.9840648899621028
-2019-08-19 00:12:27,141 - 18 (within bounds 17 to 19) gives 0.9670287614740551
-2019-08-19 00:12:27,143 - 17 (within bounds 17 to 17) gives 0.953038445204023
+2019-08-19 00:12:27,136 - 24 (midpoint of 17 and 32) gives 0.9964873460982187
+2019-08-19 00:12:27,139 - 20 (midpoint of 17 and 23) gives 0.9840648899621028
+2019-08-19 00:12:27,141 - 18 (midpoint of 17 and 19) gives 0.9670287614740551
+2019-08-19 00:12:27,143 - 17 (midpoint of 17 and 17) gives 0.953038445204023
 17 troops gives a win probability of 0.953038445204023
 ```
 
@@ -160,15 +160,17 @@ With verbosity (`-v`), you can see the values tested:
 ## Python
 
 ```python
->>> from risk import outcomes
->>> battle_probs = outcomes.calc_battle_probs(a=5, d=[3, 2, 1], d_sides=[6, 8, 6])
->>> battle_probs  # key is (territory, attack, defense)
-{(1, 1, 2): 0.38715323159729165, (1, 1, 1): 0.09612780006053091, (2, 1, 1): 0.09326837465921452, (2, 2, 0): 0.03540994291874709, (2, 3, 0): 0.029663547220175827, (0, 1, 1): 0.08332453584748056, (0, 1, 3): 0.13115845129680434, (0, 1, 2): 0.1438941163997636}
->>> outcomes.calc_win_probs(battle_probs)  # indexed by territory
+>>> from risk import battle
+>>> battle_probs = battle.calc_battle_probs(a=5, d=[3, 2, 1], d_sides=[6, 8, 6])
+>>> battle_probs.dist
+{Outcome(terr_idx=1, a_troops=1, d_troops=2): 0.38715323159729165, Outcome(terr_idx=1, a_troops=1, d_troops=1): 0.09612780006053091, Outcome(terr_idx=2, a_troops=1, d_troops=1): 0.09326837465921452, Outcome(terr_idx=2, a_troops=2, d_troops=0): 0.03540994291874709, Outcome(terr_idx=2, a_troops=3, d_troops=0): 0.029663547220175827, Outcome(terr_idx=0, a_troops=1, d_troops=1): 0.08332453584748056, Outcome(terr_idx=0, a_troops=1, d_troops=3): 0.13115845129680434, Outcome(terr_idx=0, a_troops=1, d_troops=2): 0.1438941163997636}
+>>> battle_probs.win  # indexed by territory
 [0.64162289645596, 0.15834186479813744, 0.06507349013892291]
+>>> battle_probs.cumul.attack
+[(Cumul(terr_idx=2, troops_total=5, troops=3), 0.029663547220175827), (Cumul(terr_idx=2, troops_total=4, troops=2), 0.06507349013892291), (Cumul(terr_idx=2, troops_total=3, troops=1), 0.15834186479813744), (Cumul(terr_idx=1, troops_total=2, troops=1), 0.64162289645596), (Cumul(terr_idx=0, troops_total=1, troops=1), 1.0000000000000084)]
 ```
 
-See function `outcomes.calc_cum_probs` for computing cumulative probabilities and `min_troops.find_min_troops` for (as you might guess) finding min troops, as described above. For a version of `outcomes.calc_battle_probs` that uses simulation to compute *approximate* probabilities, see `outcomes.simulate`.
+Use function `min_troops.find_min_troops` to (as you might guess) find min troops, as described above. For a version of `battle.calc_battle_probs` that uses simulation to compute *approximate* probabilities, see `battle.simulate`.
 
 
 # Dependencies
