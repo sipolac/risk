@@ -10,7 +10,7 @@ from math import isclose
 
 import pytest
 
-from risk import battle
+from risk import outcomes
 from risk import utils
 
 
@@ -30,22 +30,22 @@ def params():
 
 @pytest.fixture
 def battle_probs(params):
-    return battle.calc_battle_probs(*params)
+    return outcomes.calc_battle_probs(*params)
 
 
 @pytest.fixture
 def battle_probs_sim(params):
-    return battle.simulate(*params, 50000)
+    return outcomes.simulate(*params, 50000)
 
 
 @pytest.fixture
 def win_probs(battle_probs):
-    return battle.calc_win_probs(battle_probs)
+    return outcomes.calc_win_probs(battle_probs)
 
 
 def test_calc_loss_probs():
     def test(a_sides, d_sides, loss_key, outcome, expected):
-        actual = battle.calc_loss_probs(a_sides, d_sides)[loss_key][outcome]
+        actual = outcomes.calc_loss_probs(a_sides, d_sides)[loss_key][outcome]
         isclose(actual, expected)
     test(6, 6, (3, 2), (0, 2), 2890 / 7776)
     test(3, 3, (3, 1), (1, 0), 4 / 9)
@@ -83,7 +83,7 @@ def test_calc_cum_probs(battle_probs, params):
                     0.6416229, 1.0000000]
     dfn_expected = [0.1311585, 0.2750526, 0.3583771,
                     0.6606328, 0.7499991, 1.0000000]
-    atk, dfn = battle.calc_cum_probs(battle_probs, d)
+    atk, dfn = outcomes.calc_cum_probs(battle_probs, d)
     for act, exp in zip([atk, dfn], [atk_expected, dfn_expected]):
         for p1, p2 in zip([p for tup, p in act], exp):
             assert isclose(p1, p2, rel_tol=PROB_REL_TOL)
@@ -96,9 +96,9 @@ def main(battle_probs, battle_probs_sim):
                        a_sides=[6, 6],
                        d_sides=[6, 6],
                        stop=1)
-    battle_probs = battle.calc_battle_probs(**params_dict)
+    battle_probs = outcomes.calc_battle_probs(**params_dict)
     params_dict['iters'] = 50000
-    battle_probs_sim = battle.simulate(**params_dict)
+    battle_probs_sim = outcomes.simulate(**params_dict)
 
     def print_probs(probs):
         for k, v in sorted(probs.items()):
@@ -111,7 +111,7 @@ def main(battle_probs, battle_probs_sim):
     print_probs(battle_probs_sim)
 
     print('\ncumulative probs')
-    battle.calc_cum_probs(battle_probs, params_dict['d'])
+    outcomes.calc_cum_probs(battle_probs, params_dict['d'])
 
 
 if __name__ == '__main__':

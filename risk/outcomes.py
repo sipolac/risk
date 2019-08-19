@@ -12,7 +12,8 @@ from itertools import product
 import argparse
 import random
 
-from risk import sh_printing
+from risk import argdefs
+from risk import printing
 from risk import utils
 
 
@@ -135,6 +136,7 @@ def calc_win_probs(battle_probs, num_terr=None):
     # Take cumsum, cut off extra territory, and "un"-reverse.
     win_probs = utils.cumsum(terr_probs.values())[:-1][::-1]
     if num_terr is not None:
+        assert num_terr >= len(win_probs)
         # Append values for impossible territories.
         win_probs += [0] * (num_terr - len(win_probs))
     return win_probs
@@ -208,41 +210,14 @@ def simulate(a, d, a_sides=6, d_sides=6, stop=1, iters=10000):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('a',
-                        type=int,
-                        help='number of troops on attacking territory')
-    parser.add_argument('d',
-                        nargs='+',
-                        type=int,
-                        help=('number of troops on defending territory; '
-                              'use multiple values for multiple territories'))
-    parser.add_argument('--asides',
-                        nargs='*',
-                        type=int,
-                        default=6,
-                        help=('number of sides on attack dice; use multiple '
-                              'values for multiple territories or single '
-                              'value to represent all territories'))
-    parser.add_argument('--dsides',
-                        nargs='*',
-                        type=int,
-                        default=6,
-                        help=('number of sides on defense dice; use multiple '
-                              'values for multiple territories or single '
-                              'value to represent all territories'))
-    parser.add_argument('--stop',
-                        default=1,
-                        type=int,
-                        help='when attack has this many troops or fewer, stop')
+    parser.add_argument('a', **argdefs.a)
+    parser.add_argument('d', **argdefs.d)
+    parser.add_argument('--asides', **argdefs.asides)
+    parser.add_argument('--dsides', **argdefs.dsides)
+    parser.add_argument('--stop', **argdefs.stop)
     args = parser.parse_args()
 
-    # Clean arguments.
-    if len(args.d) == 1:
-        args.d = args.d[0]
-    if isinstance(args.asides, list) and len(args.asides) == 1:
-        args.asides = args.asides[0]
-    if isinstance(args.dsides, list) and len(args.dsides) == 1:
-        args.dsides = args.dsides[0]
+    argdefs.clean_args(args)
 
     battle_probs = calc_battle_probs(args.a, args.d,
                                      args.asides, args.dsides,
@@ -251,7 +226,7 @@ def main():
     d_list = args.d if isinstance(args.d, list) else [args.d]
     cum_probs = calc_cum_probs(battle_probs, d_list)
     win_probs = calc_win_probs(battle_probs, len(d_list))
-    sh_printing.print_all(battle_probs, *cum_probs, win_probs)
+    printing.print_all(battle_probs, *cum_probs, win_probs)
 
 
 if __name__ == '__main__':
