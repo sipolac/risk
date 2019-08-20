@@ -4,19 +4,18 @@
 Authors: Chris Sipola
 Created: 2019-08-19
 
-Allocate troops defensively in a way that minimizes the maximum
-probability of getting taken over across various battle configurations.
-That is, allocate troops in a way that strengthens your weakest links
-from a defensive position.
+Functions for allocating troops for fortification.
 """
 from copy import deepcopy
+from functools import reduce
+from operator import mul
 from typing import Dict, List
 
 from risk import battle
 
 
-def minimax(troops_to_allocate: int, *args: List[Dict]):
-    """Fortify position through efficient troop allocation.
+def fortify(troops_to_allocate: int, *args: List[Dict]):
+    """Fortify position to minimize chance of attack winning *any* engagement.
 
     Args:
         troops_to_allocate (int): Number of troops to allocate to defensive
@@ -32,30 +31,31 @@ def minimax(troops_to_allocate: int, *args: List[Dict]):
     arg_list = deepcopy(args)
     del args
 
+    def any_wins(prob_list):
+        """Probably that attack wins *any* of the engagements."""
+        return 1 - reduce(mul, [(1 - p) for p in prob_list])
+
+    p_list = [battle.calc_probs(**args).win[-1] for args in arg_list]
+
     # Iteratively add troops to the weakest defensive positions.
     for _ in range(troops_to_allocate):
-
-        # Find weakest position.
-        worst_prob = 0  # higher is worse
-        worst_arg_idx = None
+        best_arg_idx = None
+        best_terr_idx = None
+        best_any_prob = 1
         for arg_idx, args in enumerate(arg_list):
-            p = battle.calc_probs(**args).win[-1]
-            if p > worst_prob:
-                worst_prob = p
-                worst_arg_idx = arg_idx
-
-        # Find out which territory to fortify.
-        best_prob = 1  # lower is better
-        best_terr = None
-        worst_args = arg_list[worst_arg_idx]
-        for terr_idx in range(len(worst_args['d'])):
-            args = deepcopy(worst_args)
-            args['d'][terr_idx] += 1
-            p = battle.calc_probs(**args).win[-1]
-            if p < best_prob:
-                best_prob = p
-                best_terr = terr_idx
-        arg_list[worst_arg_idx]['d'][best_terr] += 1
+            for terr_idx in range(len(args['d'])):
+                new_args = deepcopy(args)
+                new_args['d'][terr_idx] += 1
+                p = battle.calc_probs(**new_args).win[-1]
+                p_list_new = p_list[:]
+                p_list_new[arg_idx] = p
+                p_any = any_wins(p_list_new)
+                if p_any < best_any_prob:
+                    best_any_prob = p_any
+                    best_arg_idx = arg_idx
+                    best_terr_idx = terr_idx
+        arg_list[best_arg_idx]['d'][best_terr_idx] += 1
+        p_list[best_arg_idx] = battle.calc_probs(**arg_list[best_arg_idx]).win[-1]
 
     return arg_list[0] if len(arg_list) == 1 else arg_list
 
@@ -87,7 +87,7 @@ def main():
     print('current win probs')
     print_probs(arg_list)
 
-    arg_list_new = minimax(troops_to_allocate, *arg_list)
+    arg_list_new = fortify(troops_to_allocate, *arg_list)
 
     print('\nnew win probs')
     print_probs(arg_list_new)

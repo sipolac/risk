@@ -12,7 +12,7 @@ A few advantages of this implementation:
 
 I've also included some functions that help with higher-level decision making:
 * **Offensive troop allocation** (`min_troops.find_min_troops`): A function that finds the smallest number of troops that would guarantee a win probability that is *at least* some target probability. This is useful for deciding where to allocate troops before an attack.
-*  **Defensive troop allocation** (`fortify.minimax`): A function that allocates troops across multiple battle configurations in a way that [minimaxes](https://en.wikipedia.org/wiki/Minimax) the probability of getting conquered in any given battle. This is useful when allocating troops to, say, protect a continent. The battle configurations may themselves be composed of multiple territories.
+*  **Defensive troop allocation** (`fortify.fortify`): A function that allocates troops across multiple battle configurations in a way that minimizes the probability of losing *one or more* battles. This is useful when allocating troops to, say, protect the choke points of a continent. (In order to get a continent bonus, you must hold *every* territory of that continent.) Note the battle configurations may themselves be composed of multiple territories.
 
 Code is written in Python 3.7.4.
 
@@ -86,7 +86,7 @@ optional arguments:
   -v, --verbose         verbosity
 ```
 
-A CLI for `fortify.minimax` hasn't been built yet :-(
+A CLI for `fortify.fortify` hasn't been built yet :-(
 
 <a name="examples"/>
 
@@ -258,7 +258,7 @@ Now a new scenario (a Python exclusive!): Let's say there are **three choke poin
 * The other player has 8 troops against your 4 troops, and defense has a +2 bonus (0.54 probability).
 * The other player has 16 troops against three consecutive territories, which have 8 troops, 3 troops and 2 troops (0.64 probability).
 
-If you want to allocate 10 troops to your territories in order to minimax the probabilities of the other player winning those engagements:
+The probability of the attacking player winning one or more of these engagements is 1 - [(1 - 0.83) * (1 - 0.54) * (1 - 0.64)] = 0.97. If you want to allocate 10 troops to minimize this probability:
 
 ```python
 >>> from risk import fortify
@@ -266,7 +266,7 @@ If you want to allocate 10 troops to your territories in order to minimax the pr
 ...             dict(a=8, d=[4], d_sides=[8]),
 ...             dict(a=16, d=[8, 3, 2])]
 >>> troops_to_allocate = 10
->>> arg_list_new = fortify.minimax(troops_to_allocate, *arg_list)
+>>> arg_list_new = fortify.fortify(troops_to_allocate, *arg_list)
 >>> for args in arg_list_new:
 ...     print(args)
 ... 
@@ -275,7 +275,7 @@ If you want to allocate 10 troops to your territories in order to minimax the pr
 {'a': 16, 'd': [8, 4, 5]}
 ```
 
-So we'd add 5 troops to the first configuration (which was the weakest), 1 to the second, and the remaining 4 to the third. If we compute the probability of attack winning in the three *new* configurations, we get 0.36, 0.39 and 0.37 respectively.
+This would add 5 troops to the first configuration, 2 to the second, and the remaining 3 to the third. If we compute the probability of attack winning in the three *new* configurations, we get 0.37, 0.28 and 0.43 respectively. Now the probability that attack wins one or more of the engagements is 1 - [(1 - 0.37) * (1 - 0.28) * (1 - 0.43)] = 0.73.
 
 
 <a name="dependencies"/>
