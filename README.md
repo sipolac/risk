@@ -254,8 +254,8 @@ If we assume the other player knows these odds and chooses to attack the *weakes
 >>> arg_list = [dict(a=8, d=[4]),
 ...             dict(a=8, d=[4], d_sides=[8]),
 ...             dict(a=16, d=[8, 3, 2])]
->>> troops_to_allocate = 10
->>> fortified = fortify.fortify(troops_to_allocate, *arg_list)
+>>> d_troops = 10
+>>> fortified = fortify.fortify(arg_list, d_troops=d_troops)
 >>> for k, v in fortified._asdict().items():
 ...   print(f'{k}: {v}')
 ... 
@@ -272,7 +272,7 @@ This would add 5 troops to the first configuration, 1 to the second, and the rem
 But what if we assume we'll be attacked at *all* choke points? In this case, the optimization problem is different in that we want to minimize the probability of the other player winning *one or more* of the engagements. Originally this probability was 1 - [(1 - 0.83) * (1 - 0.54) * (1 - 0.64)] = 0.97, and the previous allocation gave 0.76. To minimize this number specifically:
 
 ```python
->>> fortified = fortify.fortify(troops_to_allocate, *arg_list, method='any')
+>>> fortified = fortify.fortify(arg_list, d_troops=d_troops, method='any')
 >>> for k, v in fortified._asdict().items():
 ...   print(f'{k}: {v}')
 ... 

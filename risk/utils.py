@@ -26,13 +26,6 @@ def broadcast(x, n):
     return x
 
 
-def unbroadcast(x):
-    if isinstance(x, (list, tuple)):
-        return x[0] if len(x) == 1 else x
-    else:
-        return x
-
-
 def memoize(func):
     """Allows for memoization of functions that have non-hashable args."""
     cache = func.cache = {}
