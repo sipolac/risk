@@ -10,7 +10,9 @@ A few advantages of this implementation:
 * Under the hood, it uses dynamic programming, which is probably a bit cleaner than using matrix algebra (e.g., a direct implementation of [this paper](http://www4.stat.ncsu.edu/~jaosborn/research/RISK.pdf)).
 * It runs quickly. Even for large inputs (e.g., 100 vs. 100), runtime is less than a second.
 
-I've also included a function that helps you find the smallest number of troops that would guarantee a win probability that is *at least* some target probability. This is useful for deciding where to allocate troops at the beginning of a turn.
+I've also included some functions that help with higher-level decision making:
+* **Offensive troop allocation** (`min_troops.find_min_troops`): A function that finds the smallest number of troops that would guarantee a win probability that is *at least* some target probability. This is useful for deciding where to allocate troops before an attack.
+*  **Defensive troop allocation** (`fortify.minimax`): A function that allocates troops across multiple battle configurations in a way that [minimaxes](https://en.wikipedia.org/wiki/Minimax) the probability of getting conquered in any given battle. This is useful when allocating troops to, say, protect a continent. The battle configurations may themselves be composed of multiple territories.
 
 Code is written in Python 3.7.4.
 
@@ -58,7 +60,7 @@ optional arguments:
   --all                 show all values
 ```
 
-For troop allocation (described [below](#cmd_alloc)):
+For finding the min number of troops (as described above):
 ```
 >>> python3 min_troops.py -h
 usage: min_troops.py [-h] [--asides [ASIDES [ASIDES ...]]]
@@ -84,6 +86,8 @@ optional arguments:
   -v, --verbose         verbosity
 ```
 
+A CLI for `fortify.minimax` hasn't been built yet :-(
+
 <a name="examples"/>
 
 # Examples
@@ -104,7 +108,7 @@ territory | attack win probability
         1 | 0.6416228964559516
 ```
 
-To show all outcome probabilities (`--all`):
+To show the probability of all outcomes (`--all`):
 
 ```
 >>> python3 battle.py 5 3 --all
@@ -138,7 +142,7 @@ territory | attack win probability
 
 Let's add a few wrinkles:
 * Instead of just one territory, you want to attack **three territories consecutively**, moving all your troops onto conquered territories along the way. The second territory has 2 troops, and the third has 1.
-* The second of the three territories has a +2 defense bonus, meaning defense rolls with **8-sided dice** when defending that territory.
+* The **second territory** has a +2 defense bonus, meaning defense rolls with **8-sided dice** when defending that territory.
 
 ```
 >>> python3 battle.py 5 3 2 1 --dsides 6 8 6 --all
@@ -180,14 +184,14 @@ territory | attack win probability
 
 ### Troop allocation
 
-If you want to *find* the minimum number of attack troops that would guarantee victory with at least 0.95 probability in the above scenario, you could do the following:
+If you want to know the minimum number of attack troops that would guarantee victory with at least 0.95 probability in the above scenario, you could do the following:
 
 ```
 >>> python3 min_troops.py 0.95 3 2 1 --dsides 6 8 6
 17 troops gives a win probability of 0.953038445204023
 ```
 
-With verbosity (`-v`), you can see the values tested:
+<!-- With verbosity (`-v`), you can see the values tested:
 
 ```
 >>> python3 min_troops.py 0.95 3 2 1 --dsides 6 8 6 -v
@@ -200,7 +204,7 @@ With verbosity (`-v`), you can see the values tested:
 2019-08-19 00:12:27,141 - 18 (midpoint of 17 and 19) gives 0.9670287614740551
 2019-08-19 00:12:27,143 - 17 (midpoint of 17 and 17) gives 0.953038445204023
 17 troops gives a win probability of 0.953038445204023
-```
+``` -->
 
 
 <a name="py"/>
@@ -227,14 +231,14 @@ Using the scenario from above:
 >>> battle_probs.cumul.attack
 [(CumulOutcome(terr_idx=2, troops_total=5, troops=3), 0.029663547220175827), (CumulOutcome(terr_idx=2, troops_total=4, troops=2), 0.06507349013892291), (CumulOutcome(terr_idx=2, troops_total=3, troops=1), 0.15834186479813744), (CumulOutcome(terr_idx=1, troops_total=2, troops=1), 0.64162289645596), (CumulOutcome(terr_idx=0, troops_total=1, troops=1), 1.0000000000000084)]
 ```
-```python
+<!-- ```python
 >>> from risk import printing
 >>> printing.print_win_probs(battle_probs)  # one of a few printing functions
 territory | attack win probability
         1 | 0.64162289645596
         2 | 0.15834186479813744
         3 | 0.06507349013892291
-```
+``` -->
 
 
 <a name="py_alloc"/>
@@ -248,6 +252,30 @@ Again, using the scenario above:
 >>> min_troops.find_min_troops(0.95, dict(d=[3, 2, 1], d_sides=[6, 8, 6]))
 17
 ```
+
+Now a new scenario (a Python exclusive!): Let's say there are **three choke points** of a continent you're trying to defend, and they have the following configurations:
+* The other player has 8 troops against your 4 troops (0.83 probability of getting taken over).
+* The other player has 8 troops against your 4 troops, and defense has a +2 bonus (0.54 probability).
+* The other player has 16 troops against three consecutive territories, which have 8 troops, 3 troops and 2 troops (0.64 probability).
+
+If you want to allocate 10 troops to your territories in order to minimax the probabilities of the other player winning those engagements:
+
+```python
+>>> from risk import fortify
+>>> arg_list = [dict(a=8, d=[4]),
+...             dict(a=8, d=[4], d_sides=[8]),
+...             dict(a=16, d=[8, 3, 2])]
+>>> troops_to_allocate = 10
+>>> arg_list_new = fortify.minimax(troops_to_allocate, *arg_list)
+>>> for args in arg_list_new:
+...     print(args)
+... 
+{'a': 8, 'd': [9]}
+{'a': 8, 'd': [5], 'd_sides': [8]}
+{'a': 16, 'd': [8, 4, 5]}
+```
+
+So we'd add 5 troops to the first configuration (which was the weakest), 1 to the second, and the remaining 4 to the third. If we compute the probability of attack winning in the three *new* configurations, we get 0.36, 0.39 and 0.37 respectively.
 
 
 <a name="dependencies"/>
