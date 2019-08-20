@@ -4,7 +4,7 @@
 Authors: Chris Sipola
 Created: 2019-08-18
 
-Definine common argparse arguments.
+Define common argparse arguments.
 """
 a = dict(
     type=int,
@@ -38,7 +38,7 @@ stop = dict(
 _all = dict(
     action='store_true',
     default=False,
-    help='show all values'
+    help='show all probability values'
 )
 v = dict(
     action='count',

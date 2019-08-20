@@ -25,7 +25,6 @@ Code is written in Python 3.7.4.
   - [Python](#py)
     - [Battle outcomes](#py_outcomes)
     - [Troop allocation](#py_alloc)
-    - [Other](#py_other)
 - [Dependencies](#dependencies)
 
 
@@ -219,10 +218,16 @@ Using the scenario from above:
 >>> battle_probs = battle.calc_probs(a=5, d=[3, 2, 1], d_sides=[6, 8, 6])
 >>> battle_probs.dist
 {Outcome(terr_idx=1, a_troops=1, d_troops=2): 0.38715323159729165, Outcome(terr_idx=1, a_troops=1, d_troops=1): 0.09612780006053091, Outcome(terr_idx=2, a_troops=1, d_troops=1): 0.09326837465921452, Outcome(terr_idx=2, a_troops=2, d_troops=0): 0.03540994291874709, Outcome(terr_idx=2, a_troops=3, d_troops=0): 0.029663547220175827, Outcome(terr_idx=0, a_troops=1, d_troops=1): 0.08332453584748056, Outcome(terr_idx=0, a_troops=1, d_troops=3): 0.13115845129680434, Outcome(terr_idx=0, a_troops=1, d_troops=2): 0.1438941163997636}
+```
+```python
 >>> battle_probs.win  # indexed by territory
 [0.64162289645596, 0.15834186479813744, 0.06507349013892291]
+```
+```python
 >>> battle_probs.cumul.attack
 [(CumulOutcome(terr_idx=2, troops_total=5, troops=3), 0.029663547220175827), (CumulOutcome(terr_idx=2, troops_total=4, troops=2), 0.06507349013892291), (CumulOutcome(terr_idx=2, troops_total=3, troops=1), 0.15834186479813744), (CumulOutcome(terr_idx=1, troops_total=2, troops=1), 0.64162289645596), (CumulOutcome(terr_idx=0, troops_total=1, troops=1), 1.0000000000000084)]
+```
+```python
 >>> from risk import printing
 >>> printing.print_win_probs(battle_probs)  # one of a few printing functions
 territory | attack win probability
@@ -241,14 +246,8 @@ Again, using the scenario above:
 ```python
 >>> from risk import min_troops
 >>> min_troops.find_min_troops(0.95, dict(d=[3, 2, 1], d_sides=[6, 8, 6]))
-MinTroops(troops=17, win_prob=0.953038445204023)
+17
 ```
-
-<a name="py_other"/>
-
-### Other
-
-For a version of `risk.battle.calc_probs` that uses simulation to compute *approximate* probabilities, see `risk.battle.calc_probs_sim`. For the printing functions used for the shell, see `risk.printing`.
 
 
 <a name="dependencies"/>

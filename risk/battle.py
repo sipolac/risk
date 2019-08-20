@@ -9,6 +9,7 @@ Functions for computing battle outcome probabilities in the board game Risk.
 from collections import Counter, defaultdict, namedtuple
 from functools import lru_cache
 from itertools import product
+from typing import Dict, List, Tuple
 import argparse
 import random
 
@@ -17,22 +18,34 @@ from risk import printing
 from risk import utils
 
 
+# Key for dict defining distribution of outcome probabilities. terr_idx is
+# territory index, where 0 is the first defense territory, 1 is the second,
+# etc. {x}_troops is the number of attack or defense troops on that
+# territory.
 Outcome = namedtuple('Outcome', 'terr_idx a_troops d_troops')
+
+# Holds two CumulOutcome objects.
 CumulStats = namedtuple('CumulStats', 'attack defense')
+
+# Key for cumulative outcome dictionary. Specific to either attack or defense.
+# troops_total is the number of troops for that player still in play across
+# all territories relevant to the engagement. E.g., for defense, it's the
+# number of troops still left on the territory specified by terr_idx plus the
+# number of troops in territories that haven't been attacked.
 CumulOutcome = namedtuple('CumulOutcome', 'terr_idx troops_total troops')
 
 
 class BattleConfig(object):
     """Battle configuration: the parameters that define an interaction."""
     def __init__(self, a, d, a_sides, d_sides, stop):
-        # Original inputs.
+        # Original inputs into the function that computes outcome probs.
         self.a = a
         self.d = d
         self.a_sides = a_sides
         self.d_sides = d_sides
         self.stop = stop
 
-        # Modified/inferred inputs.
+        # Derived or standardized inputs.
         self.num_terr = 1 if isinstance(d, int) else len(d)
         self.d_list = self.broadcast_arg(d, self.num_terr)
         self.a_sides_list = self.broadcast_arg(a_sides, self.num_terr)
@@ -43,7 +56,7 @@ class BattleConfig(object):
 
     @staticmethod
     def broadcast_arg(val, n):
-        """Broadcast into a list if not done already."""
+        """Broadcasts into a list if not done already."""
         if isinstance(val, int):
             val = [val] * n
         assert len(val) == n
@@ -58,47 +71,57 @@ class BattleConfig(object):
 
 
 class BattleProbs(object):
-    """Pack of information describing output probabilities."""
-    def __init__(self, dist, cfg):
-        self.cfg = cfg
+    """Packet of information describing output probabilities."""
+    def __init__(self, dist: Dict[Outcome, float], cfg: BattleConfig):
         self.dist = dist
-        self.cumul = self._calc_cum_probs()
+        self.cfg = cfg
+        self.cumul = self._calc_cumul_probs()
         self.win = self._calc_win_probs()
 
-    def _calc_cum_probs(self):
-        """Calculate cumulative probabilities for attack and defense.
+    def _calc_cumul_probs(self) -> CumulStats:
+        """Calculates cumulative probabilities for attack and defense."""
+        def one_player(player: str) -> List[Tuple[CumulOutcome, float]]:
+            player_idx = ['attack', 'defense'].index(player)
 
-        Returns:
-            (CumulStats) Namedtuple of attack and defense cumulative probs
-        """
-        def one_player(index):
-            """index is 0 for attack, 1 for defense."""
-            dct = defaultdict(int)
+            # Sum probs to create dict keyed on *cumulative* outcomes. But
+            # note that probs aren't cumulative yet.
+            rem_probs = defaultdict(int)
             for (t, a, d), p in self.dist.items():
-                # t, a, d is territory index, attack troops, defense troops.
                 rems = self._calc_remaining_troops(t, a, d, self.cfg.d_list)
-                dct[(t, rems[index], (a, d)[index])] += p
-            lst = sorted(dct.items(), key=lambda x: -x[0][1])  # sort on rem
-            csum = utils.cumsum([p for tup, p in lst])
-            lst = list(zip([CumulOutcome(*tup) for tup, p in lst], csum))
-            return lst
+                cumout = CumulOutcome(t, rems[player_idx], (a, d)[player_idx])
+                rem_probs[cumout] += p
 
-        return CumulStats(one_player(0), one_player(1))
+            # Compute cumulative probabilities. First sort by total (i.e.,
+            # remaining) troops for the player.
+            probs_list = sorted(rem_probs.items(),
+                                key=lambda x: -x[0].troops_total)
+            csum = utils.cumsum([x[1] for x in probs_list])
+            cumul_probs = list(zip([x[0] for x in probs_list], csum))
+            return cumul_probs
 
-    def _calc_win_probs(self):
-        """Calculate attack's probability of conquering each territory."""
+        return CumulStats(one_player('attack'), one_player('defense'))
+
+    def _calc_win_probs(self) -> List:
+        """Calculates attack's probability of conquering each territory."""
+        # Get probability of defeat of each defense territory. Reverse
+        # to prepare for cumsum.
         terr_probs = defaultdict(int)
         for (t, a, d), p in sorted(self.dist.items(), reverse=True):
             if d == 0:
-                t += 1  # pretend it's a new territory to make calcs easier
+                t += 1  # dummy territory to make calcs easier
             terr_probs[t] += p
-        # Take cumsum, cut off extra territory, and "un"-reverse.
+
+        # Take cumsum, cut off dummy territory, and "un"-reverse.
         win_probs = utils.cumsum(terr_probs.values())[:-1][::-1]
         win_probs += [0] * (self.cfg.num_terr - len(win_probs))
         return win_probs
 
     @staticmethod
-    def _calc_remaining_troops(t, a, d, d_list):
+    def _calc_remaining_troops(t, a, d, d_list) -> Tuple[int, int]:
+        """Calculates remaining troops on specified engagement.
+
+        t is territory index, a is # of attack troops, d is # of defense.
+        """
         a_rem = a + t  # since 1 left on each conquered territory
         d_rem = d + sum(d_list[t + 1:])
         return a_rem, d_rem
@@ -121,7 +144,7 @@ loss_probs_6_6 = {(3, 2): {(0, 2): 2890 / 7776,
 
 
 @lru_cache(maxsize=None)
-def calc_loss_probs(a_sides, d_sides):
+def calc_loss_probs(a_sides, d_sides) -> Dict[Tuple, Dict[Tuple, float]]:
     """Returns probability of various loss combinations.
 
     Args:
@@ -159,8 +182,8 @@ def calc_loss_probs(a_sides, d_sides):
     return loss_probs
 
 
-def calc_probs(a, d, a_sides=6, d_sides=6, stop=1):
-    """Get probability of all outcomes.
+def calc_probs(a, d, a_sides=6, d_sides=6, stop=1) -> BattleProbs:
+    """Calculates probability of all outcomes.
 
     Args:
         a (int): Number of troops on attacking territory
@@ -219,8 +242,9 @@ def calc_probs(a, d, a_sides=6, d_sides=6, stop=1):
     return BattleProbs(dist, cfg)
 
 
-def calc_probs_sim(a, d, a_sides=6, d_sides=6, stop=1, iters=10000):
-    """Simulate battles (for sanity-checking).
+def calc_probs_sim(a, d, a_sides=6, d_sides=6,
+                   stop=1, iters=10000) -> BattleProbs:
+    """Simulates battles (for sanity-checking).
 
     Should take same inputs and give same outputs as version that gives
     exact answers, with exception of additional arg for number of iterations.
@@ -245,8 +269,8 @@ def calc_probs_sim(a, d, a_sides=6, d_sides=6, stop=1, iters=10000):
                 a, d = a - 1, cfg.d_list[t]
         return Outcome(t, a, d)
 
-    dist = Counter([simulate_one(a) for _ in range(iters)])
-    dist = {tup: p / iters for tup, p in dist.items()}  # turn into probs
+    counts = Counter([simulate_one(a) for _ in range(iters)])
+    dist = {outcome: count / iters for outcome, count in counts.items()}
     return BattleProbs(dist, cfg)
 
 

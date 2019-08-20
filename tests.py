@@ -20,7 +20,8 @@ PROB_REL_TOL_APPROX = 1e-1  # for comparison of approx probabilities
 
 @pytest.fixture
 def config():
-    cfg = battle.BattleConfig(a=5, d=[3, 2], a_sides=[6, 6], d_sides=[6, 6], stop=1)
+    cfg = battle.BattleConfig(a=5, d=[3, 2], a_sides=[6, 6],
+                              d_sides=[6, 6], stop=1)
     return cfg
 
 
@@ -83,14 +84,12 @@ def test_calc_cumul_probs(battle_probs):
 
 
 def test_find_min_troops():
-    def test(target, battle_args, troops_expected, p_expected):
+    def test(target, battle_args, expected):
         actual = min_troops.find_min_troops(target, battle_args)
-        assert actual.troops == troops_expected
-        assert isclose(actual.win_prob, p_expected, rel_tol=PROB_REL_TOL)
-
-    test(0.5, dict(d=11), 12, 0.5762944972440298)
-    test(0.95, dict(d=11), 21, 0.9616912565871958)
-    test(0.5, dict(d=11, d_sides=8), 19, 0.5070879747303201)
+        assert actual == expected
+    test(0.5, dict(d=11), 12)  # 0.5762944972440298
+    test(0.95, dict(d=11), 21)  # 0.9616912565871958
+    test(0.5, dict(d=11, d_sides=8), 19)  # 0.5070879747303201
 
 
 def main():

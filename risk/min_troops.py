@@ -6,16 +6,12 @@ Created: 2019-08-18
 
 Functions that find the number of troops given a target win probability.
 """
-from collections import namedtuple
 import argparse
 import logging
 
 from risk import argdefs
 from risk import battle
 from risk import utils
-
-
-MinTroops = namedtuple('MinTroops', 'troops win_prob')
 
 
 def find_min_troops(target, battle_args, upper_bound_start=8, logger=None):
@@ -74,7 +70,8 @@ def find_min_troops(target, battle_args, upper_bound_start=8, logger=None):
         p = calc_prob(a)
         logger.info((f'incrementing to {a}, putting {p} above {target}'))
 
-    return MinTroops(a, p)  # mid is our number of attack troops
+    logger.info(f'found: {a} with prob of {p}')
+    return a
 
 
 def main():
