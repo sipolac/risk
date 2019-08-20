@@ -11,8 +11,8 @@ A few advantages of this implementation:
 * It runs quickly. Even for large inputs (e.g., 100 vs. 100), runtime is less than a second.
 
 I've also included some functions that help with higher-level decision making:
-* **Offensive troop allocation** (`min_troops.find_min_troops`): A function that finds the smallest number of troops that would guarantee a win probability that is *at least* some target probability. This is useful for deciding where to allocate troops before an attack.
-*  **Defensive troop allocation** (`fortify.fortify`): A function that allocates troops across multiple battle configurations in a way that minimizes the probability of losing *one or more* battles. This is useful when allocating troops to, say, protect the choke points of a continent. (In order to get a continent bonus, you must hold *every* territory of that continent.) Note the battle configurations may themselves be composed of multiple territories.
+* **Offensive troop allocation** (`min_troops.find_min_troops`): A function that finds the minimum number of troops that would guarantee a win probability that is *at least* some target probability. This is useful for deciding where to allocate troops before an attack.
+* **Defensive troop allocation** (`fortify.fortify`): A function that allocates troops across defensive territories in *multiple battle configurations* in order to satisfy one of two conditions: (1) minimize the *maximum* probability that you lose *across* configurations, or (2) minimize the probability that you lose in *at least one* configuration. This is useful when allocating troops to protect the choke points of a continent, since you must hold *every* territory of that continent in order to receive the continent bonus. Note the battle configurations may be composed of multiple territories. See examples below for further explanation. 
 
 Code is written in Python 3.7.4.
 
@@ -21,13 +21,12 @@ Code is written in Python 3.7.4.
 
 - [Arguments](#args)
 - [Examples](#examples)
-  - [Command line](#cmd)
-    - [Battle outcomes](#cmd_outcomes)
-    - [Troop allocation](#cmd_alloc)
-  - [Python](#py)
-    - [Battle outcomes](#py_outcomes)
-    - [Troop allocation](#py_alloc)
+  - [Battle outcomes](#outcomes)
+  - [Troop allocation](#alloc)
+    - [Min troops](#mintroops)
+    - [Fortification](#fortification)
 - [Dependencies](#dependencies)
+- [TODO](#todo)
 
 
 <a name="args"/>
@@ -60,7 +59,7 @@ optional arguments:
   --all                 show all values
 ```
 
-For finding the min number of troops (as described above):
+For finding "min troops" (as described above):
 ```
 >>> python3 min_troops.py -h
 usage: min_troops.py [-h] [--asides [ASIDES [ASIDES ...]]]
@@ -92,13 +91,9 @@ A CLI for `fortify.fortify` hasn't been built yet :-(
 
 # Examples
 
-<a name="cmd"/>
+<a name="outcomes"/>
 
-## Command line
-
-<a name="cmd_outcomes"/>
-
-### Battle outcomes
+## Battle outcomes
 
 If you have 5 troops and you're attacking a territory with 3 troops, the probability of overtaking the territory is:
 
@@ -180,42 +175,7 @@ territory | attack win probability
         3 | 0.06507349013892291
 ```
 
-<a name="cmd_alloc"/>
-
-### Troop allocation
-
-If you want to know the minimum number of attack troops that would guarantee victory with at least 0.95 probability in the above scenario, you could do the following:
-
-```
->>> python3 min_troops.py 0.95 3 2 1 --dsides 6 8 6
-17 troops gives a win probability of 0.953038445204023
-```
-
-<!-- With verbosity (`-v`), you can see the values tested:
-
-```
->>> python3 min_troops.py 0.95 3 2 1 --dsides 6 8 6 -v
-2019-08-19 00:12:27,077 - testing upper bound 8...
-2019-08-19 00:12:27,129 - not high enough; trying range 9 to 16...
-2019-08-19 00:12:27,130 - not high enough; trying range 17 to 32...
-2019-08-19 00:12:27,134 - searching for number of troops...
-2019-08-19 00:12:27,136 - 24 (midpoint of 17 and 32) gives 0.9964873460982187
-2019-08-19 00:12:27,139 - 20 (midpoint of 17 and 23) gives 0.9840648899621028
-2019-08-19 00:12:27,141 - 18 (midpoint of 17 and 19) gives 0.9670287614740551
-2019-08-19 00:12:27,143 - 17 (midpoint of 17 and 17) gives 0.953038445204023
-17 troops gives a win probability of 0.953038445204023
-``` -->
-
-
-<a name="py"/>
-
-## Python
-
-<a name="py_outcomes"/>
-
-### Battle outcomes
-
-Using the scenario from above:
+In Python:
 
 ```python
 >>> from risk import battle
@@ -240,12 +200,37 @@ territory | attack win probability
         3 | 0.06507349013892291
 ``` -->
 
+<a name="alloc"/>
 
-<a name="py_alloc"/>
+## Troop allocation
 
-### Troop allocation
+<a name="mintroops"/>
 
-Again, using the scenario above:
+### Min troops
+
+If you want to know the minimum number of attack troops that would guarantee victory with at least 0.95 probability in the above scenario, you could do the following:
+
+```
+>>> python3 min_troops.py 0.95 3 2 1 --dsides 6 8 6
+17 troops gives a win probability of 0.953038445204023
+```
+
+<!-- With verbosity (`-v`), you can see the values tested:
+
+```
+>>> python3 min_troops.py 0.95 3 2 1 --dsides 6 8 6 -v
+2019-08-19 00:12:27,077 - testing upper bound 8...
+2019-08-19 00:12:27,129 - not high enough; trying range 9 to 16...
+2019-08-19 00:12:27,130 - not high enough; trying range 17 to 32...
+2019-08-19 00:12:27,134 - searching for number of troops...
+2019-08-19 00:12:27,136 - 24 (midpoint of 17 and 32) gives 0.9964873460982187
+2019-08-19 00:12:27,139 - 20 (midpoint of 17 and 23) gives 0.9840648899621028
+2019-08-19 00:12:27,141 - 18 (midpoint of 17 and 19) gives 0.9670287614740551
+2019-08-19 00:12:27,143 - 17 (midpoint of 17 and 17) gives 0.953038445204023
+17 troops gives a win probability of 0.953038445204023
+``` -->
+
+In Python:
 
 ```python
 >>> from risk import min_troops
@@ -253,12 +238,16 @@ Again, using the scenario above:
 17
 ```
 
-Now a new scenario (a Python exclusive!): Let's say there are **three choke points** of a continent you're trying to defend, and they have the following configurations:
-* The other player has 8 troops against your 4 troops (0.83 probability of getting taken over).
-* The other player has 8 troops against your 4 troops, and defense has a +2 bonus (0.54 probability).
-* The other player has 16 troops against three consecutive territories, which have 8 troops, 3 troops and 2 troops (0.64 probability).
+<a name="fortification"/>
 
-The probability of the attacking player winning one or more of these engagements is 1 - [(1 - 0.83) * (1 - 0.54) * (1 - 0.64)] = 0.97. If you want to allocate 10 troops to minimize this probability:
+### Fortification
+
+In a separate scenario, let's say there are **three choke points** in a continent you're trying to defend, and these choke points have the following configurations:
+* Their 8 troops vs. your 4 troops (**0.83** probability of getting taken over).
+* Their 8 troops vs. your 4 troops, but at this choke you have a +2 defensive bonus (**0.54** probability).
+* Their 16 troops vs. three consecutive territories, which have 8 troops, 3 troops and 2 troops respectively (**0.64** probability).
+
+If we assume the other player knows these odds and chooses to attack the *weakest* choke point *only*, then their odds of success will be max(0.83, 0.54, 0.64) = 0.83. If we want to allocate 10 troops toward our territories to minimize this probability:
 
 ```python
 >>> from risk import fortify
@@ -266,19 +255,49 @@ The probability of the attacking player winning one or more of these engagements
 ...             dict(a=8, d=[4], d_sides=[8]),
 ...             dict(a=16, d=[8, 3, 2])]
 >>> troops_to_allocate = 10
->>> arg_list_new = fortify.fortify(troops_to_allocate, *arg_list)
->>> for args in arg_list_new:
-...     print(args)
+>>> fortified = fortify.fortify(troops_to_allocate, *arg_list)
+>>> for k, v in fortified._asdict().items():
+...   print(f'{k}: {v}')
 ... 
-{'a': 8, 'd': [9]}
-{'a': 8, 'd': [6], 'd_sides': [8]}
-{'a': 16, 'd': [8, 4, 4]}
+args_new: ({'a': 8, 'd': [9]}, {'a': 8, 'd': [5], 'd_sides': [8]}, {'a': 16, 'd': [11, 4, 2]})
+args_old: ({'a': 8, 'd': [4]}, {'a': 8, 'd': [4], 'd_sides': [8]}, {'a': 16, 'd': [8, 3, 2]})
+allocations: [[5], [1], [3, 1, 0]]
+p_min: 0.3931560099919826
+p_any: 0.7578573335494463
+method: 'weakest'
 ```
 
-This would add 5 troops to the first configuration, 2 to the second, and the remaining 3 to the third. The probabilities of attack winning in the three *new* configurations are 0.37, 0.28 and 0.43 respectively. And the probability that attack wins *one or more* of these engagements is 1 - [(1 - 0.37) * (1 - 0.28) * (1 - 0.43)] = 0.73.
+This would add 5 troops to the first configuration, 1 to the second, and the remaining 4 to various territories in the third. The new maximum probabilty decreases to 0.39. (An additional step is assuming we know how many troops they'll be getting at the beginning of their turn, and adding this number to attack in each configuration.)
+
+But what if we assume we'll be attacked at *all* choke points? In this case, the optimization problem is different in that we want to minimize the probability of the other player winning *one or more* of the engagements. Originally this probability was 1 - [(1 - 0.83) * (1 - 0.54) * (1 - 0.64)] = 0.97, and the previous allocation gave 0.76. To minimize this number specifically:
+
+```python
+>>> fortified = fortify.fortify(troops_to_allocate, *arg_list, method='any')
+>>> for k, v in fortified._asdict().items():
+...   print(f'{k}: {v}')
+... 
+args_new: ({'a': 8, 'd': [9]}, {'a': 8, 'd': [6], 'd_sides': [8]}, {'a': 16, 'd': [8, 4, 4]})
+args_old: ({'a': 8, 'd': [4]}, {'a': 8, 'd': [4], 'd_sides': [8]}, {'a': 16, 'd': [8, 3, 2]})
+allocations: [[5], [2], [0, 1, 2]]
+p_min: 0.4302836340896645
+p_any: 0.7344628440848463
+method: 'any'
+```
+
+Given this alternative allocation, the probability of attack winning *one or more* of these engagements is 0.73, which is lower than the other method's 0.76 (a good thing). However, the new maximum probability is higher, with a value of 0.43 instead of 0.39.
+
+In practice, the attacker may take an approach where they attack your weakest position, and if they lose, attack your other positions. This would change the odds slightly, so you may want to choose an allocation that is a compromise between these two methods.
+
+**An aside**: A major [TODO](#todo) for me is to implement this fortification algorithm in a way that considers the strategic allocation of the opponent's troops. I imagine this might look something like a (two-step?) [minimax algorithm](https://www.geeksforgeeks.org/minimax-algorithm-in-game-theory-set-1-introduction/), where in the first step we consider all possible defense allocations, and in the second step we consider all possible attack allocations—assuming we know the number to be allocated beforehand. (And maybe if we have a *phenomenal* defensive allocation, the attacking player may choose not to allocate to those engagement points at all!) I'll have to give it more thought :-)
 
 
 <a name="dependencies"/>
 
 # Dependencies
 None
+
+
+<a name="todo"/>
+
+# TODO
+* Implement fortification algorithm so that it considers the strategic allocation of the opponent's troops

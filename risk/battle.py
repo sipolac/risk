@@ -47,20 +47,12 @@ class BattleConfig(object):
 
         # Derived or standardized inputs.
         self.num_terr = 1 if isinstance(d, int) else len(d)
-        self.d_list = self.broadcast_arg(d, self.num_terr)
-        self.a_sides_list = self.broadcast_arg(a_sides, self.num_terr)
-        self.d_sides_list = self.broadcast_arg(d_sides, self.num_terr)
+        self.d_list = utils.broadcast(d, self.num_terr)
+        self.a_sides_list = utils.broadcast(a_sides, self.num_terr)
+        self.d_sides_list = utils.broadcast(d_sides, self.num_terr)
         self.args = dict(a=a, d=d, a_sides=a_sides, d_sides=d_sides, stop=stop)
 
         self.check_args()
-
-    @staticmethod
-    def broadcast_arg(val, n):
-        """Broadcasts into a list if not done already."""
-        if isinstance(val, int):
-            val = [val] * n
-        assert len(val) == n
-        return val
 
     def check_args(self):
         assert self.a > 1
