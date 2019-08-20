@@ -271,11 +271,11 @@ The probability of the attacking player winning one or more of these engagements
 ...     print(args)
 ... 
 {'a': 8, 'd': [9]}
-{'a': 8, 'd': [5], 'd_sides': [8]}
-{'a': 16, 'd': [8, 4, 5]}
+{'a': 8, 'd': [6], 'd_sides': [8]}
+{'a': 16, 'd': [8, 4, 4]}
 ```
 
-This would add 5 troops to the first configuration, 2 to the second, and the remaining 3 to the third. If we compute the probability of attack winning in the three *new* configurations, we get 0.37, 0.28 and 0.43 respectively. Now the probability that attack wins one or more of the engagements is 1 - [(1 - 0.37) * (1 - 0.28) * (1 - 0.43)] = 0.73.
+This would add 5 troops to the first configuration, 2 to the second, and the remaining 3 to the third. The probabilities of attack winning in the three *new* configurations are 0.37, 0.28 and 0.43 respectively. And the probability that attack wins *one or more* of these engagements is 1 - [(1 - 0.37) * (1 - 0.28) * (1 - 0.43)] = 0.73.
 
 
 <a name="dependencies"/>

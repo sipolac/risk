@@ -31,33 +31,38 @@ def fortify(troops_to_allocate: int, *args: List[Dict]):
     arg_list = deepcopy(args)
     del args
 
-    def any_wins(prob_list):
-        """Probably that attack wins *any* of the engagements."""
-        return 1 - reduce(mul, [(1 - p) for p in prob_list])
-
     p_list = [battle.calc_probs(**args).win[-1] for args in arg_list]
+
+    def _calc_p_any(args, terr_idx):
+        new_args = deepcopy(args)
+        new_args['d'][terr_idx] += 1
+        p = battle.calc_probs(**new_args).win[-1]
+        p_list_new = p_list[:]
+        p_list_new[arg_idx] = p
+        p_any = calc_any_win_prob(p_list_new)
+        return p_any
 
     # Iteratively add troops to the weakest defensive positions.
     for _ in range(troops_to_allocate):
         best_arg_idx = None
         best_terr_idx = None
-        best_any_prob = 1
+        best_p_any = 1
         for arg_idx, args in enumerate(arg_list):
             for terr_idx in range(len(args['d'])):
-                new_args = deepcopy(args)
-                new_args['d'][terr_idx] += 1
-                p = battle.calc_probs(**new_args).win[-1]
-                p_list_new = p_list[:]
-                p_list_new[arg_idx] = p
-                p_any = any_wins(p_list_new)
-                if p_any < best_any_prob:
-                    best_any_prob = p_any
+                p_any = _calc_p_any(args, terr_idx)
+                if p_any < best_p_any:
+                    best_p_any = p_any
                     best_arg_idx = arg_idx
                     best_terr_idx = terr_idx
         arg_list[best_arg_idx]['d'][best_terr_idx] += 1
         p_list[best_arg_idx] = battle.calc_probs(**arg_list[best_arg_idx]).win[-1]
 
     return arg_list[0] if len(arg_list) == 1 else arg_list
+
+
+def calc_any_win_prob(prob_list):
+    """Probably that attack wins *any* of the engagements."""
+    return 1 - reduce(mul, [(1 - p) for p in prob_list])
 
 
 def get_allocations(arg_list, arg_list_new):
@@ -76,7 +81,7 @@ def main():
             p = battle.calc_probs(**args).win[-1]
             p_list.append(p)
             print(args, p)
-        print(f'weakest: {max(p_list)}')
+        print(f'any_win_prob: {calc_any_win_prob(p_list)}')
 
     # Always use lists for d values.
     arg_list = [dict(a=8, d=[4]),
