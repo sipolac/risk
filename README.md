@@ -6,13 +6,13 @@ A few advantages of this implementation:
 * The probabilities are exact (doesn't use a simulator).
 * It can compute probabilities for attacks on **multiple territories**!
 * It can handle **dice bonuses** (e.g., a player rolling with 8-sided dice). This is helpful if you're playing on [warfish.net](www.warfish.net) or another platform that has user-created maps.
-* Allows user to specify when they want to stop attacking. This is useful if they want to guarantee a certain number of troops on the attacking territory after the engagement—maybe to defend against a different adjacent territory.
+<!-- * Allows user to specify when they want to stop attacking. This is useful if they want to guarantee a certain number of troops on the attacking territory after the engagement—maybe to defend against a different adjacent territory. -->
 * Under the hood, it uses dynamic programming, which is probably a bit cleaner than using matrix algebra (e.g., a direct implementation of [this paper](http://www4.stat.ncsu.edu/~jaosborn/research/RISK.pdf)).
 * It runs quickly. Even for large inputs (e.g., 100 vs. 100), runtime is less than a second.
 
-I've also included some functions that help with higher-level decision making:
+It also includes some functions that help with higher-level decision making:
 * **Offensive troop allocation** (`min_troops.find_min_troops`): A function that finds the minimum number of troops that would guarantee a win probability that is *at least* some target probability. This is useful for deciding where to allocate troops before an attack.
-* **Defensive troop allocation** (`fortify.fortify`): A function that allocates troops across defensive territories in *multiple battle configurations* in order to satisfy one of two conditions: (1) minimize the *maximum* probability that you lose *across* configurations, or (2) minimize the probability that you lose in *at least one* configuration. This is useful when allocating troops to protect the choke points of a continent, since you must hold *every* territory of that continent in order to receive the continent bonus. Note the battle configurations may be composed of multiple territories. See examples below for further explanation. 
+* **Defensive troop allocation** (`fortify.fortify`): A function that allocates troops across defensive territories in *multiple battle configurations* in order to minimize the probability that you lose in *at least one* configuration. This is useful when allocating troops to protect the choke points of a continent, since you must hold *every* territory of that continent in order to receive the continent bonus. Note the battle configurations may be composed of multiple territories. See example below for further explanation. 
 
 Code is written in Python 3.7.4.
 
@@ -136,7 +136,7 @@ territory | attack win probability
 ```
 
 Let's add a few wrinkles:
-* Instead of just one territory, you want to attack **three territories consecutively**, moving all your troops onto conquered territories along the way. The second territory has 2 troops, and the third has 1.
+* Instead of just one territory, you want to attack **three territories consecutively**, moving all your troops into conquered territories along the way. The second territory has 2 troops, and the third has 1.
 * The **second territory** has a +2 defense bonus, meaning defense rolls with **8-sided dice** when defending that territory.
 
 ```
@@ -242,12 +242,36 @@ In Python:
 
 ### Fortification
 
-In a separate scenario, let's say there are **three choke points** in a continent you're trying to defend, and these choke points have the following configurations:
+As a separate scenario, let's say there are **three choke points** in a continent you're trying to defend, and these choke points have the following configurations:
 * Their 8 troops vs. your 4 troops (**0.83** probability of getting taken over).
 * Their 8 troops vs. your 4 troops, but at this choke you have a +2 defensive bonus (**0.54** probability).
-* Their 16 troops vs. three consecutive territories, which have 8 troops, 3 troops and 2 troops respectively (**0.64** probability).
+* Their 16 troops vs. three consecutive territories, which have 8 troops, 3 troops and 2 troops respectively (**0.64** probability). Let's say the first two territories are outside your continent, but the third is inside it.
 
-If we assume the other player knows these odds and chooses to attack the *weakest* choke point *only*, then their odds of success will be max(0.83, 0.54, 0.64) = 0.83. If we want to allocate 10 troops toward our territories to minimize this probability:
+<!-- If we assume the other player knows these odds and chooses to attack the *weakest* choke point *only*, then their odds of success will be max(0.83, 0.54, 0.64) = 0.83. If we want to allocate 10 troops toward our territories to minimize this probability: -->
+
+<!-- ```python
+>>> from risk import fortify
+>>> arg_list = [dict(a=8, d=[4]),
+...             dict(a=8, d=[4], d_sides=[8]),
+...             dict(a=16, d=[8, 3, 2])]
+>>> d_troops = 10
+>>> fortified = fortify.fortify(arg_list, d_troops)
+>>> for k, v in fortified._asdict().items():
+...   print(f'{k}: {v}')
+... 
+args_new: ({'a': 8, 'd': [9]}, {'a': 8, 'd': [5], 'd_sides': [8]}, {'a': 16, 'd': [11, 4, 2]})
+args_old: ({'a': 8, 'd': [4]}, {'a': 8, 'd': [4], 'd_sides': [8]}, {'a': 16, 'd': [8, 3, 2]})
+allocation: [[5], [1], [3, 1, 0]]
+p_min: 0.3931560099919826
+p_any: 0.7578573335494463
+method: 'weakest'
+``` -->
+
+<!-- This would add 5 troops to the first configuration, 1 to the second, and the remaining 4 to various territories in the third. The new maximum probabilty decreases to 0.39. (An additional step is assuming we know how many troops they'll be getting at the beginning of their turn, and adding this number to attack in each configuration.) -->
+
+<!-- But what if we assume we'll be attacked at *all* choke points? In this case, the optimization problem is different in that we want to minimize the probability of the other player winning *one or more* of the engagements. Originally this probability was 1 - [(1 - 0.83) * (1 - 0.54) * (1 - 0.64)] = 0.97, and the previous allocation gave 0.76. To minimize this number specifically: -->
+
+One reasonable strategy is to try to minimize the probability of the opponent winning *one or more* of the engagements. This probability is now 1 - [(1 - 0.83) * (1 - 0.54) * (1 - 0.64)] = **0.97**. If you have **10 troops** to allocate toward your territories to reduce this probability, the most optimal way to do so would be:
 
 ```python
 >>> from risk import fortify
@@ -255,40 +279,21 @@ If we assume the other player knows these odds and chooses to attack the *weakes
 ...             dict(a=8, d=[4], d_sides=[8]),
 ...             dict(a=16, d=[8, 3, 2])]
 >>> d_troops = 10
->>> fortified = fortify.fortify(arg_list, d_troops=d_troops)
->>> for k, v in fortified._asdict().items():
-...   print(f'{k}: {v}')
-... 
-args_new: ({'a': 8, 'd': [9]}, {'a': 8, 'd': [5], 'd_sides': [8]}, {'a': 16, 'd': [11, 4, 2]})
-args_old: ({'a': 8, 'd': [4]}, {'a': 8, 'd': [4], 'd_sides': [8]}, {'a': 16, 'd': [8, 3, 2]})
-allocations: [[5], [1], [3, 1, 0]]
-p_min: 0.3931560099919826
-p_any: 0.7578573335494463
-method: 'weakest'
-```
-
-This would add 5 troops to the first configuration, 1 to the second, and the remaining 4 to various territories in the third. The new maximum probabilty decreases to 0.39. (An additional step is assuming we know how many troops they'll be getting at the beginning of their turn, and adding this number to attack in each configuration.)
-
-But what if we assume we'll be attacked at *all* choke points? In this case, the optimization problem is different in that we want to minimize the probability of the other player winning *one or more* of the engagements. Originally this probability was 1 - [(1 - 0.83) * (1 - 0.54) * (1 - 0.64)] = 0.97, and the previous allocation gave 0.76. To minimize this number specifically:
-
-```python
->>> fortified = fortify.fortify(arg_list, d_troops=d_troops, method='any')
+>>> fortified = fortify.fortify(arg_list, d_troops)
 >>> for k, v in fortified._asdict().items():
 ...   print(f'{k}: {v}')
 ... 
 args_new: ({'a': 8, 'd': [9]}, {'a': 8, 'd': [6], 'd_sides': [8]}, {'a': 16, 'd': [8, 4, 4]})
 args_old: ({'a': 8, 'd': [4]}, {'a': 8, 'd': [4], 'd_sides': [8]}, {'a': 16, 'd': [8, 3, 2]})
-allocations: [[5], [2], [0, 1, 2]]
-p_min: 0.4302836340896645
+allocation: [[5], [2], [0, 1, 2]]
+p_max: 0.4302836340896645
 p_any: 0.7344628440848463
 method: 'any'
 ```
 
-Given this alternative allocation, the probability of attack winning *one or more* of these engagements is 0.73, which is lower than the other method's 0.76 (a good thing). However, the new maximum probability is higher, with a value of 0.43 instead of 0.39.
+This would allocate 5 troops to the territory in the first configuration, 2 to the territory in the second, and the remaining 3 to various territories in the third. Given this allocation, the probability of being conquered in at least one of the engagements is 0.7—and therefore the probability of retaining your continent is 1 – 0.73 = 0.27.
 
-In practice, the attacker may take an approach where they attack your weakest position, and if they lose, attack your other positions. This would change the odds slightly, so you may want to choose an allocation that is a compromise between these two methods.
-
-**An aside**: A major [TODO](#todo) for me is to implement this fortification algorithm in a way that considers the strategic allocation of the opponent's troops. I imagine this might look something like a (two-step?) [minimax algorithm](https://www.geeksforgeeks.org/minimax-algorithm-in-game-theory-set-1-introduction/), where in the first step we consider all possible defense allocations, and in the second step we consider all possible attack allocations—assuming we know the number to be allocated beforehand. (And maybe if we have a *phenomenal* defensive allocation, the attacking player may choose not to allocate to those engagement points at all!) I'll have to give it more thought :-)
+**An aside**: A major personal [TODO](#todo) is to rewrite this fortification algorithm so that it optionally considers the strategic allocation of the opponent's troops after the player takes their turn (assuming we know the number of troops the opponent will allocate toward the battle configurations of interest before they attack). I haven't thought about it *too* much, but I imagine it might look something like a simple two-step, non-recursive version of [minimax](https://en.wikipedia.org/wiki/Minimax).
 
 
 <a name="dependencies"/>
@@ -300,4 +305,4 @@ None
 <a name="todo"/>
 
 # TODO
-* Implement fortification algorithm so that it considers the strategic allocation of the opponent's troops
+* Rewrite fortification algorithm so that it optionally considers the strategic allocation of the opponent's troops
