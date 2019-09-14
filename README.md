@@ -291,11 +291,7 @@ p_any: 0.7344628440848463
 method: 'any'
 ```
 
-<<<<<<< HEAD
 This would allocate 5 troops to the territory in the first configuration, 2 to the territory in the second, and the remaining 3 to various territories in the third. Given this allocation, the probability of being conquered in at least one of the engagements is 0.73, and therefore the probability of retaining your continent is 1 – 0.73 = 0.27.
-=======
-This would allocate 5 troops to the territory in the first configuration, 2 to the territory in the second, and the remaining 3 to various territories in the third. Given this allocation, the probability of being conquered in at least one of the engagements is 0.73—and therefore the probability of retaining your continent is 1 – 0.73 = 0.27.
->>>>>>> 8c7207f2d7e714b8ae0377bdb8cb338d32cdb183
 
 **An aside**: A major personal [TODO](#todo) is to rewrite this fortification algorithm so that it optionally considers the strategic allocation of the opponent's troops after the player takes their turn (assuming we know the number of troops the opponent will allocate toward the battle configurations of interest before they attack). I haven't thought about it *too* much, but I imagine it might look something like a simple two-step, non-recursive version of [minimax](https://en.wikipedia.org/wiki/Minimax).
 
