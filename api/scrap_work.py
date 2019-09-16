@@ -1,21 +1,3 @@
-def hello_world(request):
-    """Responds to any HTTP request.
-    Args:
-        request (flask.Request): HTTP request object.
-    Returns:
-        The response text or any set of values that can be turned into a
-        Response object using
-        `make_response <http://flask.pocoo.org/docs/1.0/api/#flask.Flask.make_response>`.
-    """
-    request_json = request.get_json()
-    if request.args and 'message' in request.args:
-        return request.args.get('message')
-    elif request_json and 'message' in request_json:
-        return request_json['message']
-    else:
-        return f'Hello World!'
-
-
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
@@ -207,6 +189,32 @@ def calc_probs_api(request) -> BattleProbs:
         (dict) Key is tuple of final attack and defense troops, and
         values are probabilites of those outcomes
     """
+    print('running API')
+    if request.method == 'OPTIONS':
+        # Allows GET requests from any origin with the Content-Type
+        # header and caches preflight response for an 3600s
+        headers = {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'POST',
+            'Access-Control-Allow-Headers': 'Content-Type',
+            'Access-Control-Max-Age': '3600'
+        }
+
+        return ('', 204, headers)
+
+    # Set CORS headers for the main request
+    headers = {
+        'Access-Control-Allow-Origin': '*'
+    }
+
+    print(request)
+    print(request.get_json())
+    print(type(request))
+    print(dir(request))
+    print(request.args)
+    print(request.data)
+    print(request.content_type)
+
     request_json = request.get_json()
     if request.args and 'a' in request.args:
         a = request.args.get('a')
@@ -215,6 +223,7 @@ def calc_probs_api(request) -> BattleProbs:
         a = request_json['a']
         d = request_json['d']
     else:
+        print('something went wrong')
         return f'Something went wrong :-('
 
     a_sides, d_sides = 6, 6
@@ -258,7 +267,8 @@ def calc_probs_api(request) -> BattleProbs:
         return dist
 
     dist = recur_helper(0, a, cfg.d_list[0])
-    return str(BattleProbs(dist, cfg).win)
+
+    return (str(BattleProbs(dist, cfg).win), 200, headers)
 
 
 def calc_probs_sim(a, d, a_sides=6, d_sides=6,
