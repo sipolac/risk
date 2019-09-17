@@ -52,26 +52,17 @@ def find_min_troops(target, battle_args, upper_bound_start=8, logger=None):
         p = calc_prob(hi)
 
     logger.info('searching for number of troops...')
-    while lo <= hi:
+    while lo < hi:
         mid = (lo + hi) // 2
         p = calc_prob(mid)
         logger.info(f'{mid} (midpoint of {lo} and {hi}) gives {p}')
         if p < target:
             lo = mid + 1
-        elif p > target:
-            hi = mid - 1
         else:
-            break
-    a = mid
+            hi = mid
 
-    # Since we want prob >= target, increment if that isn't true.
-    if p < target:
-        a += 1
-        p = calc_prob(a)
-        logger.info((f'incrementing to {a}, putting {p} above {target}'))
-
-    logger.info(f'found: {a} with prob of {p}')
-    return a
+    logger.info(f'found: {lo} with prob of {p}')
+    return lo
 
 
 def main():
@@ -97,8 +88,10 @@ def main():
                        a_sides=args.asides,
                        d_sides=args.dsides,
                        stop=args.stop)
-    res = find_min_troops(args.target, battle_args, logger=logger)
-    print(f'{res.troops} troops gives a win probability of {res.win_prob}')
+    min_troops = find_min_troops(args.target, battle_args, logger=logger)
+    battle_args['a'] = min_troops
+    win_prob = battle.calc_probs(**battle_args).win[-1]
+    print(f'{min_troops} troops gives a win probability of {win_prob}')
 
 
 if __name__ == '__main__':
